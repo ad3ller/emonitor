@@ -27,5 +27,4 @@ setup(name='emonitor',
       entry_points = {
         'console_scripts': ['emonitor=emonitor.emonitor:main'],
       },
-      include_package_data=True,
-      zip_safe=False)
+      )

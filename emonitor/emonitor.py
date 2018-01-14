@@ -6,11 +6,13 @@ Created on Sat Dec 23 13:43:09 2017
 """
 import sys
 import os
+import glob
 import time
 import configparser
 import argparse
 import sqlite3
-from .core import DATA_DIRE, INSTRUM_FILE, FakeInstrument, Instrument, sql_init, sql_check, sql_insert
+from .core import DATA_DIRE, INSTRUM_FILE, FakeInstrument, Instrument
+from .sqlite_tools import db_init, db_check, db_insert
 
 # config
 
@@ -109,8 +111,18 @@ def create(args, config):
         else:
             raise Exception("database already exists.  Use --force to overwrite.")
     db = sqlite3.connect(fil)
-    sql_init(db, 'data', args.columns)
+    db_init(db, 'data', args.columns)
     db.close()
+
+def tables(args, config):
+    '''  list sqlite database tables.
+    '''
+    fils = glob.glob(os.path.join(DATA_DIRE, '*.db'))
+    if len(fils) == 0:
+        print("no sqlite databases found.")
+    else:
+        fnames = [os.path.split(f)[1][:-3] for f in fils]
+        print(fnames)
 
 # emonitor
 
@@ -138,7 +150,7 @@ def run(args, config):
                 if not os.path.isfile(fil):
                     raise Exception("Database %s does not exists.  Use emonitor create."%(settings['db'] + '.db'))
                 db = sqlite3.connect(fil)
-                sql_check(db, 'data', columns)
+                db_check(db, 'data', columns)
         # header
         if tty:
             if not args.quiet:
@@ -161,7 +173,7 @@ def run(args, config):
                 else:
                     print(', '.join(values))
                 if args.output:
-                    sql_insert(db, 'data', columns, values, debug=debug)
+                    db_insert(db, 'data', columns, values, debug=debug)
             ## reset
             time.sleep(args.wait)
     except KeyboardInterrupt:
@@ -238,13 +250,17 @@ def main():
     parser_drop.add_argument('-p', '--print', action="store_true", default=False,
                              help="print instrument configuration")
 
-    # sqlite3 database
-    parser_create = subparsers.add_parser('create', help='create an sqlite database')
+    # create sqlite3 database
+    parser_create = subparsers.add_parser('create', help='create an sqlite database table')
     parser_create.set_defaults(func=create)
     parser_create.add_argument('db', type=str, help='database name')
     parser_create.add_argument('columns', nargs='+', help="table column(s)")
     parser_create.add_argument('-f', '--force', action="store_true", default=False,
                                help="ignore warnings")
+    # list sqlite database tables
+    parser_create = subparsers.add_parser('tables', help='list sqlite database tables')
+    parser_create.set_defaults(func=tables)
+
     # run server
     parser_run = subparsers.add_parser('run', help='start the emonitor server')
     parser_run.set_defaults(func=run)
