@@ -14,14 +14,14 @@ class CausalityError(ValueError):
     """
     pass
 
-def db_file(db):
+def path(db):
     """ Get path of sqlite file for 'db'
     """
     fil = os.path.join(DATA_DIRE, db + '.db')
     return fil
 
 
-def db_init(conn, table, columns):
+def init(conn, table, columns):
     """ initialize sqlite database
     """
     template = "CREATE TABLE %s(`TIMESTAMP` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, %s)"
@@ -30,7 +30,7 @@ def db_init(conn, table, columns):
     cursor.execute(sql)
     cursor.close()
 
-def db_check(conn, table, columns, debug=False):
+def check(conn, table, columns, debug=False):
     """ check sqlite database
     """
     sql = "SELECT * FROM %s"%(table)
@@ -44,7 +44,7 @@ def db_check(conn, table, columns, debug=False):
             raise Exception("column %s not in sqlite database"%(col))
     cursor.close()
 
-def db_insert(conn, table, columns, values, debug=False):
+def insert(conn, table, columns, values, debug=False):
     """ INSERT INTO {table}({columns}) VALUES ({values});
     """
     values = ["'%s'"%v for v in values]
@@ -55,7 +55,7 @@ def db_insert(conn, table, columns, values, debug=False):
     cursor.execute(sql)
     conn.commit()
 
-def db_tquery(conn, start=None, end=None, table='data', **kwargs):
+def tquery(conn, start=None, end=None, table='data', **kwargs):
     """ SELECT * FROM table WHERE tcol BETWEEN start AND end.
 
         If start is None, it will be set to time.now() - delta [default:
