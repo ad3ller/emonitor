@@ -12,7 +12,7 @@ import configparser
 import argparse
 import sqlite3
 from .core import DATA_DIRE, INSTRUM_FILE, FakeInstrument, Instrument
-from .sqlite_tools import init as db_init
+from .sqlite_tools import initialize as db_init
 from .sqlite_tools import check as db_check
 from .sqlite_tools import insert as db_insert
 

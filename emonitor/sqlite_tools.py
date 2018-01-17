@@ -21,7 +21,7 @@ def path(db):
     return fil
 
 
-def init(conn, table, columns):
+def initialize(conn, table, columns):
     """ initialize sqlite database
     """
     template = "CREATE TABLE %s(`TIMESTAMP` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, %s)"
@@ -48,6 +48,7 @@ def insert(conn, table, columns, values, debug=False):
     """ INSERT INTO {table}({columns}) VALUES ({values});
     """
     values = ["'%s'"%v for v in values]
+    columns = ["'%s'"%v for v in columns]
     sql = "INSERT INTO %s(%s) VALUES (%s)"%(table, ", ".join(columns), ", ".join(values))
     if debug:
         print(sql)
