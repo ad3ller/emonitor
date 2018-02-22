@@ -13,6 +13,11 @@ import serial
 USER_DIRE = os.path.join(os.path.expanduser("~"), '.emonitor')
 DATA_DIRE = os.path.join(USER_DIRE, 'data')
 INSTRUM_FILE = os.path.join(USER_DIRE, 'instrum.ini')
+# special characters
+CR = "\x0D"
+LF = "\x0A"
+ENQ = "\x05"
+ACK = "\x06"
 
 class FakeInstrument(object):
     """ simulate comms. with a serial instrument"""
@@ -37,6 +42,16 @@ class Instrument(object):
         self.settings = settings
         self.setup()
         self.sensors = (settings['sensors'].strip()).split(',')
+        # format commands
+        for tmp_key in ['cmd', 'ack', 'enq']:
+            if tmp_key in self.settings:
+                tmp_val = self.settings[tmp_key]
+                # string placeholder replacements
+                for placeholder, value in zip(["<CR>", "<LF>", "<ACK>", "<ENQ>"],
+                                              [CR, LF, ACK, ENQ]):
+                    if placeholder in tmp_val:
+                        tmp_val = tmp_val.replace(placeholder, value)
+                self.settings[tmp_key] = tmp_val
         # format response
         if 'regex' in settings:
             self.regex = settings['regex']
@@ -62,7 +77,11 @@ class Instrument(object):
                 try:
                     val = int(self.settings[att])
                 except ValueError:
-                    val = self.settings[att]
+                    # check if float
+                    try:
+                        val = float(self.settings[att])
+                    except ValueError:
+                        val = self.settings[att]
                 # update serial configuration
                 setattr(self.connection, att, val)
 
@@ -79,7 +98,7 @@ class Instrument(object):
             for sen in self.sensors:
                 self.connection.flushInput()
                 # parse command
-                serial_cmd = cmd.replace('#', sen)
+                serial_cmd = cmd.replace('<sensor>', sen)
                 serial_cmd = bytes(serial_cmd, 'utf8')
                 if debug:
                     print(serial_cmd)
@@ -117,4 +136,3 @@ class Instrument(object):
         """ close connection"""
         if self.connection.is_open:
             self.connection.close()
-
