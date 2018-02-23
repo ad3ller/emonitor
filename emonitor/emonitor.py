@@ -133,6 +133,7 @@ def run(args, config):
     """
     tty = sys.stdout.isatty()
     close = not args.keep_open
+    header = not args.no_header
     settings = dict(config.items(args.instrum))
     columns = ('TIMESTAMP',) + tuple([sen.strip() for sen in settings['sensors'].split(',')])
     db = None
@@ -157,10 +158,11 @@ def run(args, config):
         if tty:
             if not args.quiet:
                 print("Starting emonitor. Use Ctrl-C to stop. \n")
-                test = instrum.read_all(debug=debug, close=close)
-                str_width = len(str(test[0]))
-                print(columns[0].rjust(19) + ' \t', '\t '.join([col.rjust(str_width) for col in columns[1:]]))
-        else:
+                if header:
+                    test = instrum.read_all(debug=debug, close=close)
+                    str_width = len(str(test[0]))
+                    print(columns[0].rjust(19) + ' \t', '\t '.join([col.rjust(str_width) for col in columns[1:]]))
+        elif header:
             print(', '.join(columns))
         # start server
         while True:
@@ -273,6 +275,8 @@ def main():
                             help='wait time (s) between queries')
     parser_run.add_argument('-k', '--keep_open', action="store_true", default=False,
                             help="keep serial connection open between reads")
+    parser_run.add_argument('-n', '--no_header', action="store_true", default=False,
+                            help="don't print header, e.g., when appending to a file")
     # TODO probably PyQtGraph, maybe vispy
     #parser_run.add_argument('-p', '--plot', action="store_true", default=False,
     #                    help="live data plotting")
