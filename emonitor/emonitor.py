@@ -11,7 +11,7 @@ import time
 import configparser
 import argparse
 import sqlite3
-from .core import DATA_DIRE, INSTRUM_FILE, FakeInstrument, Instrument
+from .core import DATA_DIRE, INSTRUM_FILE, FakeSerialInstrument, SerialInstrument
 from .tools import db_init, db_check, db_insert
 
 # config
@@ -21,11 +21,11 @@ def overwrite(config):
     with open(INSTRUM_FILE, 'w+', encoding='utf8') as fil:
         config.write(fil)
 
-def clist(args, config):
+def list_config_sections(args, config):
     """ list sections in the config file """
     print(config.sections())
 
-def new(args, config):
+def new_config_section(args, config):
     """ create a new configuration section """
     if config.has_section(args.output):
         if input("%s already exists. Overwrite (y/n):"%(args.output)).lower() in ['y', 'yes']:
@@ -35,7 +35,7 @@ def new(args, config):
     config.add_section(args.output)
     overwrite(config)
 
-def copy(args, config):
+def copy_config_section(args, config):
     """ copy config sections args.instrum to args.output (including any defaults)"""
     if not config.has_section(args.instrum):
         raise NameError("%s was not found in the config file"%(args.instrum))
@@ -50,7 +50,7 @@ def copy(args, config):
         config.set(args.output, key, value)
     overwrite(config)
 
-def delete(args, config):
+def delete_config_section(args, config):
     """ delete a section of the config file """
     if not config.has_section(args.instrum):
         if args.instrum == 'DEFAULT':
@@ -65,17 +65,17 @@ def delete(args, config):
         # abort
         sys.exit()
 
-def cset(args, config):
+def set_instrument_attribute(args, config):
     """ set an instrument attribute """
     if args.instrum == 'DEFAULT' or config.has_section(args.instrum):
         config.set(args.instrum, args.key, args.value)
     else:
         raise NameError("%s was not found in the config file"%(args.instrum))
     if args.print:
-        show(args, config)
+        show_config(args, config)
     overwrite(config)
 
-def drop(args, config):
+def drop_instrument_attribute(args, config):
     """ drop an instrument attribute """
     if args.instrum == 'DEFAULT' or config.has_section(args.instrum):
         if config.has_option(args.instrum, args.key):
@@ -85,10 +85,10 @@ def drop(args, config):
     else:
         raise NameError("%s was not found in the config file"%(args.instrum))
     if args.print:
-        show(args, config)
+        show_config(args, config)
     overwrite(config)
 
-def show(args, config):
+def show_config(args, config):
     """ print instrument configuration """
     if args.instrum == '__all__':
         config.write(sys.stdout)
@@ -99,7 +99,7 @@ def show(args, config):
 
 # sqlite
 
-def create(args, config):
+def create_db(args, config):
     '''  create sqlite database.
     '''
     if not isinstance(args.columns, list):
@@ -114,7 +114,7 @@ def create(args, config):
     db_init(db, 'data', args.columns)
     db.close()
 
-def tables(args, config):
+def show_db_tables(args, config):
     '''  list sqlite database tables.
     '''
     fils = glob.glob(os.path.join(DATA_DIRE, '*.db'))
@@ -147,9 +147,9 @@ def run(args, config):
     try:
         # serial connection
         if args.instrum == 'simulate':
-            instrum = FakeInstrument(settings)
+            instrum = FakeSerialInstrument(settings)
         else:
-            instrum = Instrument(settings)
+            instrum = SerialInstrument(settings)
         # check output
         if args.output:
             if 'db' not in settings:
@@ -210,17 +210,17 @@ def main():
 
     # list instruments
     parser_ls = subparsers.add_parser('list', aliases=['ls'], help='list the configured instruments')
-    parser_ls.set_defaults(func=clist)
+    parser_ls.set_defaults(func=list_config_sections)
 
     # new instrument
     parser_new = subparsers.add_parser('new', help='add a new instrument')
-    parser_new.set_defaults(func=new)
+    parser_new.set_defaults(func=new_config_section)
     parser_new.add_argument('output', type=str, help='new intrument name')
 
     # copy instrument
     parser_copy = subparsers.add_parser('copy', aliases=['cp'],
                                         help='copy configuration to a new instrument')
-    parser_copy.set_defaults(func=copy)
+    parser_copy.set_defaults(func=copy_config_section)
     parser_copy.add_argument('instrum', type=str, help='existing intrument name')
     parser_copy.add_argument('output', type=str, help='new intrument name')
     parser_copy.add_argument('-f', '--force', action="store_true", default=False,
@@ -228,20 +228,20 @@ def main():
 
     # remove instrument
     parser_delete = subparsers.add_parser('delete', help='delete instrument')
-    parser_delete.set_defaults(func=delete)
+    parser_delete.set_defaults(func=delete_config_section)
     parser_delete.add_argument('instrum', type=str, help='intrument name')
     parser_delete.add_argument('-f', '--force', action="store_true", default=False,
                                help="ignore warnings")
 
     # show config
     parser_show = subparsers.add_parser('config', help='print instrument configuration')
-    parser_show.set_defaults(func=show)
+    parser_show.set_defaults(func=show_config)
     parser_show.add_argument('instrum', type=str, nargs='?', default="__all__",
                              help='serial intrument name [if None then all]')
 
     # set attrib
     parser_set = subparsers.add_parser('set', help='set an instrument attribute')
-    parser_set.set_defaults(func=cset)
+    parser_set.set_defaults(func=set_instrument_attribute)
     parser_set.add_argument('instrum', type=str, nargs='?', default="DEFAULT",
                             help='intrument name [if None then DEFAULT]')
     parser_set.add_argument('-k', '--key', default=None,
@@ -253,7 +253,7 @@ def main():
 
     # remove attrib
     parser_drop = subparsers.add_parser('drop', help='drop an instrument attribute')
-    parser_drop.set_defaults(func=drop)
+    parser_drop.set_defaults(func=drop_instrument_attribute)
     parser_drop.add_argument('instrum', type=str, nargs='?', default="DEFAULT",
                              help='intrument name [if None then DEFAULT]')
     parser_drop.add_argument('key', default=None,
@@ -263,14 +263,14 @@ def main():
 
     # create sqlite3 database
     parser_create = subparsers.add_parser('create', help='create an sqlite database table')
-    parser_create.set_defaults(func=create)
+    parser_create.set_defaults(func=create_db)
     parser_create.add_argument('db', type=str, help='database name')
     parser_create.add_argument('columns', nargs='+', help="table column(s)")
     parser_create.add_argument('-f', '--force', action="store_true", default=False,
                                help="ignore warnings")
     # list sqlite database tables
     parser_create = subparsers.add_parser('tables', help='list sqlite database tables')
-    parser_create.set_defaults(func=tables)
+    parser_create.set_defaults(func=show_db_tables)
 
     # run server
     parser_run = subparsers.add_parser('run', help='start the emonitor server')

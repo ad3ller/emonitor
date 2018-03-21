@@ -19,7 +19,7 @@ LF = "\x0A"
 ENQ = "\x05"
 ACK = "\x06"
 
-class FakeInstrument(object):
+class FakeSerialInstrument(object):
     """ simulate comms. with a serial instrument"""
     def __init__(self, settings):
         self.config = settings
@@ -36,7 +36,7 @@ class FakeInstrument(object):
         """ close connection"""
         pass
 
-class Instrument(object):
+class SerialInstrument(object):
     """ serial communication with an instrument"""
     def __init__(self, settings):
         self.settings = settings
