@@ -11,6 +11,7 @@ import time
 import configparser
 import argparse
 import sqlite3
+import numpy as np
 from .core import DATA_DIRE, INSTRUM_FILE, FakeInstrument, Instrument
 from .sqlite_tools import initialize as db_init
 from .sqlite_tools import check as db_check
@@ -136,8 +137,16 @@ def run(args, config):
     header = not args.no_header
     settings = dict(config.items(args.instrum))
     columns = ('TIMESTAMP',) + tuple([sen.strip() for sen in settings['sensors'].split(',')])
+    # ignore some values
+    if "nan_values" in settings:
+        # TODO filter nan_values from response
+        nan_values = list([sen.strip() for sen in settings['nan_values'].split(',')])
+    else:
+        nan_values = None
     db = None
     debug = False
+    if debug and tty:
+        print("DEBUG enabled")
     try:
         # serial connection
         if args.instrum == 'simulate':
@@ -176,7 +185,8 @@ def run(args, config):
                         print('\t '.join(values))
                 else:
                     print(', '.join(values))
-                if args.output:
+                if args.output:                               
+                    # send data
                     db_insert(db, 'data', columns, values, debug=debug)
             ## reset
             time.sleep(args.wait)
