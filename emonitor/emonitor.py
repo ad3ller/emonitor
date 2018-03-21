@@ -11,11 +11,8 @@ import time
 import configparser
 import argparse
 import sqlite3
-import numpy as np
 from .core import DATA_DIRE, INSTRUM_FILE, FakeInstrument, Instrument
-from .sqlite_tools import initialize as db_init
-from .sqlite_tools import check as db_check
-from .sqlite_tools import insert as db_insert
+from .tools import db_init, db_check, db_insert
 
 # config
 

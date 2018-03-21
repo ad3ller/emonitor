@@ -14,14 +14,14 @@ class CausalityError(ValueError):
     """
     pass
 
-def path(db):
-    """ Get path of sqlite file for 'db'
+def db_path(name):
+    """ Get path of sqlite file for 'name'.
     """
-    fil = os.path.join(DATA_DIRE, db + '.db')
+    fil = os.path.join(DATA_DIRE, name + '.db')
     return fil
 
 
-def initialize(conn, table, columns):
+def db_init(conn, table, columns):
     """ initialize sqlite database
     """
     template = "CREATE TABLE %s(`TIMESTAMP` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, %s)"
@@ -30,7 +30,7 @@ def initialize(conn, table, columns):
     cursor.execute(sql)
     cursor.close()
 
-def check(conn, table, columns, debug=False):
+def db_check(conn, table, columns, debug=False):
     """ check sqlite database
     """
     sql = "SELECT * FROM %s"%(table)
@@ -44,7 +44,7 @@ def check(conn, table, columns, debug=False):
             raise Exception("column %s not in sqlite database"%(col))
     cursor.close()
 
-def insert(conn, table, columns, values, debug=False):
+def db_insert(conn, table, columns, values, debug=False):
     """ INSERT INTO {table}({columns}) VALUES ({values});
     """
     values = ["'%s'"%v for v in values]
@@ -119,7 +119,7 @@ def tquery(conn, start=None, end=None, table='data', **kwargs):
     result = pd.read_sql_query(sql, conn, coerce_float=coerce_float, parse_dates=[tcol])
     if dropna:
         # remove empty columns
-        result = result.dropna(axis=1)
+        result = result.dropna(axis=1, how='all')
     if reorder:
         # sort data by timestamp
         result = result.sort_values(by=tcol)
