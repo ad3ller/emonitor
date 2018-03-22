@@ -21,11 +21,11 @@ def overwrite(config):
     with open(INSTRUM_FILE, 'w+', encoding='utf8') as fil:
         config.write(fil)
 
-def list_config_sections(args, config):
+def list_instruments(args, config):
     """ list sections in the config file """
     print(config.sections())
 
-def new_config_section(args, config):
+def new_instrument(args, config):
     """ create a new configuration section """
     if config.has_section(args.output):
         if input("%s already exists. Overwrite (y/n):"%(args.output)).lower() in ['y', 'yes']:
@@ -35,7 +35,7 @@ def new_config_section(args, config):
     config.add_section(args.output)
     overwrite(config)
 
-def copy_config_section(args, config):
+def copy_instrument(args, config):
     """ copy config sections args.instrum to args.output (including any defaults)"""
     if not config.has_section(args.instrum):
         raise NameError("%s was not found in the config file"%(args.instrum))
@@ -50,7 +50,7 @@ def copy_config_section(args, config):
         config.set(args.output, key, value)
     overwrite(config)
 
-def delete_config_section(args, config):
+def delete_instrument(args, config):
     """ delete a section of the config file """
     if not config.has_section(args.instrum):
         if args.instrum == 'DEFAULT':
@@ -210,17 +210,17 @@ def main():
 
     # list instruments
     parser_ls = subparsers.add_parser('list', aliases=['ls'], help='list the configured instruments')
-    parser_ls.set_defaults(func=list_config_sections)
+    parser_ls.set_defaults(func=list_instruments)
 
     # new instrument
     parser_new = subparsers.add_parser('new', help='add a new instrument')
-    parser_new.set_defaults(func=new_config_section)
+    parser_new.set_defaults(func=new_instrument)
     parser_new.add_argument('output', type=str, help='new intrument name')
 
     # copy instrument
     parser_copy = subparsers.add_parser('copy', aliases=['cp'],
                                         help='copy configuration to a new instrument')
-    parser_copy.set_defaults(func=copy_config_section)
+    parser_copy.set_defaults(func=copy_instrument)
     parser_copy.add_argument('instrum', type=str, help='existing intrument name')
     parser_copy.add_argument('output', type=str, help='new intrument name')
     parser_copy.add_argument('-f', '--force', action="store_true", default=False,
@@ -228,7 +228,7 @@ def main():
 
     # remove instrument
     parser_delete = subparsers.add_parser('delete', help='delete instrument')
-    parser_delete.set_defaults(func=delete_config_section)
+    parser_delete.set_defaults(func=delete_instrument)
     parser_delete.add_argument('instrum', type=str, help='intrument name')
     parser_delete.add_argument('-f', '--force', action="store_true", default=False,
                                help="ignore warnings")
