@@ -113,7 +113,7 @@ def tquery(conn, start=None, end=None, table='data', **kwargs):
         reorder = True
         sql = "SELECT * FROM `" + table + "` WHERE `" + tcol + "` BETWEEN '" + \
              start.strftime("%Y-%m-%d %H:%M:%S") + "' AND '" + \
-             end.strftime("%Y-%m-%d %H:%M:%S") + "' ORDER BY RAND() LIMIT " + str(limit) + ";"
+             end.strftime("%Y-%m-%d %H:%M:%S") + "' ORDER BY RANDOM() LIMIT " + str(limit) + ";"
     if debug:
         print(sql)
     result = pd.read_sql_query(sql, conn, coerce_float=coerce_float, parse_dates=[tcol])
