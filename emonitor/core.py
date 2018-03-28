@@ -28,7 +28,7 @@ class FakeSerialInstrument(object):
     def read_all(self, debug=False, close=True):
         """ return fake sensor data """
         reads = []
-        for i, sen in enumerate(self.sensors):
+        for i in range(len(self.sensors)):
             reads.append('%.4f'%gauss(293 + 0.5*i, 0.1))
         return tuple(reads)
 
