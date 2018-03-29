@@ -56,7 +56,7 @@ def db_insert(conn, table, columns, values, debug=False):
     cursor.execute(sql)
     conn.commit()
 
-def tquery(conn, start=None, end=None, table='data', **kwargs):
+def tquery(conn, start=None, end=None, **kwargs):
     """ SELECT * FROM table WHERE tcol BETWEEN start AND end.
 
         If start is None, it will be set to time.now() - delta [default:
@@ -70,15 +70,16 @@ def tquery(conn, start=None, end=None, table='data', **kwargs):
         'full_resolution' is set to True.
 
         args:
-            table='data'  name of table in database     str
+            conn          database connection           object
             start         query start time              datetime.datetime
             end           query end time                datetime.datetime
 
         kwargs:
-            limit=6000               max number of rows               int
-            tcol='TIMESTAMP'         timestamp column name            str
             delta=datetime.timedelta(hours=4)
                                      time to look back in live mode   datetime.timedelta
+            table='data'             name of table in database     str
+            limit=6000               max number of rows               int
+            tcol='TIMESTAMP'         timestamp column name            str
             full_resolution=False    No limit - return everything     bool
             coerce_float=True        convert, e.g., decimal to float  bool
             dropna=True              drop NULL columns                bool
@@ -87,9 +88,10 @@ def tquery(conn, start=None, end=None, table='data', **kwargs):
             result       pandas.DataFrame
     """
     # read kwargs
+    delta = kwargs.get('delta', datetime.timedelta(hours=4))
+    table = kwargs.get('table', 'data')
     limit = kwargs.get('limit', 6000)
     tcol = kwargs.get('tcol', 'TIMESTAMP')
-    delta = kwargs.get('delta', datetime.timedelta(hours=4))
     full_resolution = kwargs.get('full_resolution', False)
     coerce_float = kwargs.get('coerce_float', True)
     dropna = kwargs.get('dropna', True)
