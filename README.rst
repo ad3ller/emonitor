@@ -1,7 +1,8 @@
 emonitor
 ========
 
-Record sensor data
+A python CLI tool for regularly reading and recording data from serial instruments, e.g., temperature sensors, vacuum pressure guages.
+
 
 Install
 -------
