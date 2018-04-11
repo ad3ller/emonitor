@@ -1,7 +1,7 @@
 emonitor
 ========
 
-For reading and recording data from serial instruments with python.  
+Read and record data from serial instruments with python.  
 
 Tested using a Pfeiffer Maxigauge vacuum pressure gauge reader and a Lakeshore 336 temperature controller. 
 
