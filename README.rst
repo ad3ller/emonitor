@@ -1,8 +1,9 @@
 emonitor
 ========
 
-A python CLI tool for regularly reading and recording data from serial instruments, e.g., temperature sensors, vacuum pressure guages.
+A python CLI tool for regularly reading and recording data from serial instruments.  
 
+Tested using a Pfeiffer Maxigauge vacuum pressure gauge reader and a Lakeshore 336 temperature controller. 
 
 Install
 -------
