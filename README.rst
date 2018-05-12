@@ -28,19 +28,14 @@ the instrument name.
     $ emonitor run simulate --wait 10
     Starting emonitor. Use Ctrl-C to stop.
 
-              TIMESTAMP         A	        B	        C
-    2018-05-12 13:20:44	 292.7695	 293.5649	 293.9454
-    2018-05-12 13:20:54	 292.9262	 293.5138	 293.9303
-    2018-05-12 13:21:04	 293.0826	 293.3233	 294.0555
-    2018-05-12 13:21:14	 293.1931	 293.4301	 294.0839
+              TIMESTAMP            A	        B	        C
+    2018-05-12 13:20:44	     292.7695	 293.5649	 293.9454
+    2018-05-12 13:20:54	     292.9262	 293.5138	 293.9303
+    2018-05-12 13:21:04	     293.0826	 293.3233	 294.0555
+    2018-05-12 13:21:14	     293.1931	 293.4301	 294.0839
     ^C
     Stopping emonitor.
 
-To store the readings, simply redirect the output to a file (comma delimited).
-
-.. code-block:: bash
-
-    $ emonitor run simulate --wait 10 > "measurement.dat"
 
 Configuration
 -------------
@@ -74,4 +69,31 @@ And to modify a serial setting,
 
     $ emonitor set lakeshore336 --key "port" --value "COM7"
 
-`emonitor` periodically transmits `cmd` to the instrument, swapping the placeholder '<sensor>' for each sensor name.
+To configure a new instrument you will need to know the hardware serial settings and the `cmd` that `emonitor` can use to query the instrument.
+
+Output
+------
+
+To store the sensor readings, simply redirect the output to a file (comma delimited).
+
+.. code-block:: bash
+
+    $ emonitor run simulate --wait 10 > "measurement.dat"
+
+Or you can send them to an SQLite database.  This is a better option when running `emonitor` for long periods of time but it requires some extra setup.
+
+Each instrument can be associated with its own SQLite database.  Set the database names in `instrum.ini`.
+
+.. code-block:: bash
+
+    $ emonitor set simulate --key db --value simulate_2018
+
+Then initialise a database with a table that has columns that match the instrument sensor names,
+
+.. code-block:: bash
+
+    $ emonitor generate simulate
+
+Enable SQLite output when running `emonitor` using the `--output` flag.
+
+See the notebooks for examples for how to query an SQLite database.

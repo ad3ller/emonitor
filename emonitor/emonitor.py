@@ -222,7 +222,7 @@ def run(args, config):
             else:
                 fil = os.path.join(DATA_DIRE, settings['db'] + '.db')
                 if not os.path.isfile(fil):
-                    raise Exception("Database %s does not exists.  Use emonitor create."%(settings['db'] + '.db'))
+                    raise Exception("Database %s does not exists.  Use generate or create."%(settings['db'] + '.db'))
                 db = sqlite3.connect(fil)
                 db_check(db, 'data', columns)
         # header
@@ -388,7 +388,7 @@ def main():
     parser_run.set_defaults(func=run)
     parser_run.add_argument('instrum', type=str, help='serial intrument name')
     parser_run.add_argument('-o', '--output', action="store_true", default=False,
-                            help='enable output')
+                            help='enable SQLite output')
     parser_run.add_argument('-w', '--wait', type=float, default=15.0,
                             help='wait time (s) between queries')
     parser_run.add_argument('-k', '--keep_open', action="store_true", default=False,
