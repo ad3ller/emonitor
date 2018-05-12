@@ -88,12 +88,13 @@ Each instrument can be associated with its own SQLite database.  Set the databas
 
     $ emonitor set simulate --key db --value simulate_2018
 
-Then initialise a database with a table that has columns that match the instrument sensor names,
+Then initialise a database with a table that has columns that match the configured sensor names,
 
 .. code-block:: bash
 
     $ emonitor generate simulate
+    Creating simulate_2018.db with columns ['A', 'B', 'C', 'D']
 
 Enable SQLite output when running `emonitor` using the `--output` flag.
 
-See the notebooks for examples for how to query an SQLite database.
+See the notebooks for examples for how to plot readings from an SQLite database.

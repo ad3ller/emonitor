@@ -160,6 +160,8 @@ def generate_db(args, config):
                 os.remove(fil)
         ## create
         if not os.path.exists(fil):
+            if not args.quiet:
+                print("Creating %s.db with columns"%(db_name), columns)
             db = sqlite3.connect(fil)
             db_init(db, 'data', columns)
             db.close()
@@ -187,7 +189,7 @@ def destroy_db(args, config):
         if args.force or input("Are you sure you want to permanently destroy %s (y/n) ?"%(fil)).lower() in ['y', 'yes']:
             os.remove(fil)
     else:
-        raise Exception("Failed to destory database.  Not found.")
+        raise Exception("Failed to destory. Database not found.")
 
 # emonitor
 
@@ -366,8 +368,10 @@ def main():
     parser_generate = subparsers.add_parser('generate')
     parser_generate.set_defaults(func=generate_db)
     parser_generate.add_argument('instrums', nargs='*', help='instrument name(s).  Omit for all.')
+    parser_generate.add_argument('-q', '--quiet', action="store_true", default=False,
+                            help="no printed output")
     parser_generate.add_argument('--overwrite', action="store_true", default=False,
-                               help="overwrite existing")
+                                 help="overwrite existing")
     parser_generate.add_argument('--force', action="store_true", default=False, help="ignore warnings")
 
     # create sqlite3 database
