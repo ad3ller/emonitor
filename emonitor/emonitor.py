@@ -11,8 +11,9 @@ import time
 import configparser
 import argparse
 import sqlite3
+from humanize import naturalsize
 from .core import DATA_DIRE, INSTRUM_FILE, FakeSerialInstrument, SerialInstrument
-from .tools import db_init, db_check, db_insert
+from .tools import db_init, db_check, db_insert, db_count, db_desc
 
 # config
 
@@ -28,7 +29,7 @@ def list_instruments(args, config):
 def new_instrument(args, config):
     """ create a new configuration section """
     if config.has_section(args.output):
-        if input("%s already exists. Overwrite (y/n):"%(args.output)).lower() in ['y', 'yes']:
+        if input("%s already exists. Overwrite (y/n) ?"%(args.output)).lower() in ['y', 'yes']:
             config.remove_section(args.output)
         else:
             sys.exit()
@@ -57,7 +58,7 @@ def delete_instrument(args, config):
             raise Exception("Cannot remove DEFAULT section from instrum.ini")
         else:
             raise NameError("%s was not found in the config file"%(args.instrum))
-    elif args.force or input("Are you sure you want to delete %s (y/n):"%(args.instrum)).lower() in ['y', 'yes']:
+    elif args.force or input("Are you sure you want to delete %s (y/n) ?"%(args.instrum)).lower() in ['y', 'yes']:
         # delete file
         config.remove_section(args.instrum)
         overwrite(config)
@@ -99,30 +100,64 @@ def show_config(args, config):
 
 # sqlite
 
-def create_db(args, config):
-    '''  create sqlite database.
-    '''
-    if not isinstance(args.columns, list):
-        raise TypeError("columns must be a list")
-    fil = os.path.join(DATA_DIRE, args.db + '.db')
-    if os.path.isfile(fil):
-        if args.force:
-            os.remove(fil)
-        else:
-            raise Exception("database already exists.  Use --force to overwrite.")
-    db = sqlite3.connect(fil)
-    db_init(db, 'data', args.columns)
-    db.close()
-
 def show_db_tables(args, config):
     '''  list sqlite database tables.
     '''
     fils = glob.glob(os.path.join(DATA_DIRE, '*.db'))
     if len(fils) == 0:
-        print("no sqlite databases found.")
+        print("No sqlite databases found.")
     else:
         fnames = [os.path.split(f)[1][:-3] for f in fils]
         print(fnames)
+
+def describe_db(args, config):
+    '''  describe sqlite database.
+    '''
+    fil = os.path.join(DATA_DIRE, args.db + '.db')
+    if not os.path.isfile(fil):
+        raise Exception("%s not found."%(fil))
+    else:
+        # info
+        db = sqlite3.connect(fil)
+        num_rows = db_count(db, 'data')
+        info = db_desc(db, 'data')
+        db.close()
+        cols = [row[1] for row in info]
+        # output
+        print("path:", fil)
+        print("size:", naturalsize(os.path.getsize(fil)))
+        print("columns:", cols)
+        print("rows:", "%d"%(num_rows))
+        # schema
+        if args.schema:
+            print("schema:", "\n")
+            for row in info:
+                print(row)
+
+def create_db(args, config):
+    '''  create sqlite database.
+    '''
+    if not isinstance(args.columns, list):
+        raise TypeError("Columns must be a list")
+    fil = os.path.join(DATA_DIRE, args.db + '.db')
+    if os.path.isfile(fil):
+        if args.force:
+            os.remove(fil)
+        else:
+            raise Exception("Database already exists.  Use --force to overwrite.")
+    db = sqlite3.connect(fil)
+    db_init(db, 'data', args.columns)
+    db.close()
+
+def destroy_db(args, config):
+    '''  delete sqlite database.
+    '''
+    fil = os.path.join(DATA_DIRE, args.db + '.db')
+    if os.path.isfile(fil):
+        if args.force or input("Are you sure you want to permanently destroy %s (y/n) ?"%(fil)).lower() in ['y', 'yes']:
+            os.remove(fil)
+    else:
+        raise Exception("Failed to destory database.  Not found.")
 
 # emonitor
 
@@ -261,16 +296,31 @@ def main():
     parser_drop.add_argument('-p', '--print', action="store_true", default=False,
                              help="print instrument configuration")
 
+    # list sqlite database tables
+    parser_show = subparsers.add_parser('show', help='list sqlite databases')
+    parser_show.set_defaults(func=show_db_tables)
+
+    # describe sqlite3 database
+    parser_describe = subparsers.add_parser('describe', help='describe an sqlite database')
+    parser_describe.set_defaults(func=describe_db)
+    parser_describe.add_argument('db', type=str, help='database name')
+    parser_describe.add_argument('-s', '--schema', action="store_true", default=False,
+                               help="table structure")
+
     # create sqlite3 database
-    parser_create = subparsers.add_parser('create', help='create an sqlite database table')
+    parser_create = subparsers.add_parser('create', help='create an sqlite database')
     parser_create.set_defaults(func=create_db)
     parser_create.add_argument('db', type=str, help='database name')
     parser_create.add_argument('columns', nargs='+', help="table column(s)")
     parser_create.add_argument('-f', '--force', action="store_true", default=False,
                                help="ignore warnings")
-    # list sqlite database tables
-    parser_create = subparsers.add_parser('tables', help='list sqlite database tables')
-    parser_create.set_defaults(func=show_db_tables)
+
+    # destroy sqlite3 database
+    parser_destroy = subparsers.add_parser('destroy', help='destroy an sqlite database')
+    parser_destroy.set_defaults(func=destroy_db)
+    parser_destroy.add_argument('db', type=str, help='database name')
+    parser_destroy.add_argument('-f', '--force', action="store_true", default=False,
+                               help="ignore warnings")
 
     # run server
     parser_run = subparsers.add_parser('run', help='start the emonitor server')

@@ -44,6 +44,28 @@ def db_check(conn, table, columns, debug=False):
             raise Exception("column %s not in sqlite database"%(col))
     cursor.close()
 
+def db_count(conn, table, debug=False):
+    """ count rows in sqlite table
+    """
+    sql = "SELECT COUNT(*) as count FROM %s;"%(table)
+    if debug:
+        print(sql)
+    cursor = conn.cursor()
+    num_rows = cursor.execute(sql).fetchone()
+    cursor.close()
+    return num_rows
+
+def db_desc(conn, table, debug=False):
+    """ get sqlite database structure
+    """
+    sql = "PRAGMA table_info(%s);"%(table)
+    if debug:
+        print(sql)
+    cursor = conn.cursor()
+    info = cursor.execute(sql).fetchall()
+    cursor.close()
+    return info
+
 def db_insert(conn, table, columns, values, debug=False):
     """ INSERT INTO {table}({columns}) VALUES ({values});
     """

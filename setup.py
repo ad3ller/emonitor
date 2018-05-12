@@ -16,14 +16,14 @@ if not os.path.isfile(USER_INSTRUM_FILE):
     shutil.copy(EXAMPLE_INTRUM_FILE, USER_INSTRUM_FILE)
 
 setup(name='emonitor',
-      version='0.0.3',
+      version='0.0.4',
       description='record sensor data',
       url='',
       author='Adam Deller',
       author_email='a.deller@ucl.ac.uk',
       license='BSD',
       packages=['emonitor'],
-      install_requires=['pyserial>=2.7'],
+      install_requires=['pyserial>=2.7', 'humanize'],
       entry_points = {
         'console_scripts': ['emonitor=emonitor.emonitor:main'],
       },
