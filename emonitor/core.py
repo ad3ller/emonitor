@@ -23,7 +23,7 @@ class FakeSerialInstrument(object):
     """ simulate comms. with a serial instrument"""
     def __init__(self, settings):
         self.config = settings
-        self.sensors = (settings['sensors'].strip()).split(',')
+        self.sensors = [sen.strip() for sen in settings['sensors'].split(',')]
 
     def read_all(self, debug=False, close=True):
         """ return fake sensor data """
@@ -41,7 +41,7 @@ class SerialInstrument(object):
     def __init__(self, settings):
         self.settings = settings
         self.setup()
-        self.sensors = (settings['sensors'].strip()).split(',')
+        self.sensors = [sen.strip() for sen in settings['sensors'].split(',')]
         # format commands
         for tmp_key in ['cmd', 'ack', 'enq']:
             if tmp_key in self.settings:

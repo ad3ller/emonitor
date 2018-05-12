@@ -134,6 +134,36 @@ def describe_db(args, config):
             for row in info:
                 print(row)
 
+def generate_db(args, config):
+    ''' automatically create sqlite databases for configured instruments
+    '''
+    if len(args.instrums) == 0:
+        args.instrums = config.sections()
+    # check instrum exists
+    for instrum in args.instrums:
+        if not config.has_section(instrum):
+            raise NameError("%s was not found in the config file"%(instrum))
+        settings = dict(config.items(instrum))
+        # database name
+        if 'db' not in settings:
+            raise NameError("'db' not configured for %s"%(instrum))
+        db_name = settings['db']
+        # get columns from instrument sensors
+        if 'sensors' not in settings:
+            raise NameError("'sensors' not configured for %s"%(instrum))
+        columns = [sen.strip() for sen in settings['sensors'].split(',')]
+        # sqlite database
+        fil = os.path.join(DATA_DIRE, db_name + '.db')
+        ## check existing
+        if os.path.exists(fil) and args.overwrite:
+            if args.force or input("Are you sure you want to permanently destroy existing %s (y/n) ?"%(fil)).lower() in ['y', 'yes']:
+                os.remove(fil)
+        ## create
+        if not os.path.exists(fil):
+            db = sqlite3.connect(fil)
+            db_init(db, 'data', columns)
+            db.close()
+
 def create_db(args, config):
     '''  create sqlite database.
     '''
@@ -258,14 +288,14 @@ def main():
     parser_copy.set_defaults(func=copy_instrument)
     parser_copy.add_argument('instrum', type=str, help='existing intrument name')
     parser_copy.add_argument('output', type=str, help='new intrument name')
-    parser_copy.add_argument('-f', '--force', action="store_true", default=False,
+    parser_copy.add_argument('--force', action="store_true", default=False,
                              help="ignore warnings")
 
     # remove instrument
     parser_delete = subparsers.add_parser('delete', help='delete instrument')
     parser_delete.set_defaults(func=delete_instrument)
     parser_delete.add_argument('instrum', type=str, help='intrument name')
-    parser_delete.add_argument('-f', '--force', action="store_true", default=False,
+    parser_delete.add_argument('--force', action="store_true", default=False,
                                help="ignore warnings")
 
     # show config
@@ -306,21 +336,27 @@ def main():
     parser_describe.add_argument('db', type=str, help='database name')
     parser_describe.add_argument('-s', '--schema', action="store_true", default=False,
                                help="table structure")
+ 
+     # auto-create sqlite3 database
+    parser_generate = subparsers.add_parser('generate', help='create sqlite databases for one or all configured instruments')
+    parser_generate.set_defaults(func=generate_db)
+    parser_generate.add_argument('instrums', nargs='*', help='instrument name(s).  Omit for all.')
+    parser_generate.add_argument('--overwrite', action="store_true", default=False,
+                               help="overwrite existing db")
+    parser_generate.add_argument('--force', action="store_true", default=False, help="ignore warnings")
 
     # create sqlite3 database
     parser_create = subparsers.add_parser('create', help='create an sqlite database')
     parser_create.set_defaults(func=create_db)
     parser_create.add_argument('db', type=str, help='database name')
     parser_create.add_argument('columns', nargs='+', help="table column(s)")
-    parser_create.add_argument('-f', '--force', action="store_true", default=False,
-                               help="ignore warnings")
+    parser_create.add_argument('--force', action="store_true", default=False, help="ignore warnings")
 
     # destroy sqlite3 database
     parser_destroy = subparsers.add_parser('destroy', help='destroy an sqlite database')
     parser_destroy.set_defaults(func=destroy_db)
     parser_destroy.add_argument('db', type=str, help='database name')
-    parser_destroy.add_argument('-f', '--force', action="store_true", default=False,
-                               help="ignore warnings")
+    parser_destroy.add_argument('--force', action="store_true", default=False, help="ignore warnings")
 
     # run server
     parser_run = subparsers.add_parser('run', help='start the emonitor server')
