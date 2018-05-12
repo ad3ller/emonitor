@@ -266,25 +266,56 @@ def run(args, config):
         if db is not None:
             db.close()
 
+DESCRIPTION = """
+    config
+    ------
+    list (ls)           list instruments
+    config              display instrument configuration
+    new                 add a new instrument
+    copy (cp)           copy instrument
+    delete (rm)         delete instrument
+    set                 set an instrument attribute
+    drop                drop an instrument attribute
+    
+    sqlite
+    ------
+    show                show sqlite databases
+    describe            describe an sqlite database
+    generate            automatically create sqlite databases for the
+                        configured instruments
+    create              create sqlite database
+    destroy             destroy sqlite database
+    
+    emonitor
+    --------
+    run                 start emonitor
+    """
+
 def main():
     """ run emonitor as a script """
     # inputs
-    parser = argparse.ArgumentParser(description='emonitor server')
-    subparsers = parser.add_subparsers(title='commands', dest='cmd', help='cmd')
+    #parser = argparse.ArgumentParser(description='emonitor server')
+    parser = argparse.ArgumentParser(description='emonitor', formatter_class=argparse.RawDescriptionHelpFormatter)
+    subparsers = parser.add_subparsers(title='commands', dest='cmd', description=DESCRIPTION)
     subparsers.required = True
 
     # list instruments
-    parser_ls = subparsers.add_parser('list', aliases=['ls'], help='list the configured instruments')
+    parser_ls = subparsers.add_parser('list', aliases=['ls'])
     parser_ls.set_defaults(func=list_instruments)
 
+    # show config
+    parser_show = subparsers.add_parser('config')
+    parser_show.set_defaults(func=show_config)
+    parser_show.add_argument('instrum', type=str, nargs='?', default="__all__",
+                             help='serial intrument name [if None then all]')
+
     # new instrument
-    parser_new = subparsers.add_parser('new', help='add a new instrument')
+    parser_new = subparsers.add_parser('new')
     parser_new.set_defaults(func=new_instrument)
     parser_new.add_argument('output', type=str, help='new intrument name')
 
     # copy instrument
-    parser_copy = subparsers.add_parser('copy', aliases=['cp'],
-                                        help='copy configuration to a new instrument')
+    parser_copy = subparsers.add_parser('copy', aliases=['cp'])
     parser_copy.set_defaults(func=copy_instrument)
     parser_copy.add_argument('instrum', type=str, help='existing intrument name')
     parser_copy.add_argument('output', type=str, help='new intrument name')
@@ -292,20 +323,14 @@ def main():
                              help="ignore warnings")
 
     # remove instrument
-    parser_delete = subparsers.add_parser('delete', help='delete instrument')
+    parser_delete = subparsers.add_parser('delete', aliases=['rm'])
     parser_delete.set_defaults(func=delete_instrument)
     parser_delete.add_argument('instrum', type=str, help='intrument name')
     parser_delete.add_argument('--force', action="store_true", default=False,
                                help="ignore warnings")
 
-    # show config
-    parser_show = subparsers.add_parser('config', help='print instrument configuration')
-    parser_show.set_defaults(func=show_config)
-    parser_show.add_argument('instrum', type=str, nargs='?', default="__all__",
-                             help='serial intrument name [if None then all]')
-
     # set attrib
-    parser_set = subparsers.add_parser('set', help='set an instrument attribute')
+    parser_set = subparsers.add_parser('set')
     parser_set.set_defaults(func=set_instrument_attribute)
     parser_set.add_argument('instrum', type=str, nargs='?', default="DEFAULT",
                             help='intrument name [if None then DEFAULT]')
@@ -317,7 +342,7 @@ def main():
                             help="print instrument configuration")
 
     # remove attrib
-    parser_drop = subparsers.add_parser('drop', help='drop an instrument attribute')
+    parser_drop = subparsers.add_parser('drop')
     parser_drop.set_defaults(func=drop_instrument_attribute)
     parser_drop.add_argument('instrum', type=str, nargs='?', default="DEFAULT",
                              help='intrument name [if None then DEFAULT]')
@@ -327,39 +352,39 @@ def main():
                              help="print instrument configuration")
 
     # list sqlite database tables
-    parser_show = subparsers.add_parser('show', help='list sqlite databases')
+    parser_show = subparsers.add_parser('show')
     parser_show.set_defaults(func=show_db_tables)
 
     # describe sqlite3 database
-    parser_describe = subparsers.add_parser('describe', help='describe an sqlite database')
+    parser_describe = subparsers.add_parser('describe')
     parser_describe.set_defaults(func=describe_db)
     parser_describe.add_argument('db', type=str, help='database name')
     parser_describe.add_argument('-s', '--schema', action="store_true", default=False,
                                help="table structure")
  
      # auto-create sqlite3 database
-    parser_generate = subparsers.add_parser('generate', help='create sqlite databases for one or all configured instruments')
+    parser_generate = subparsers.add_parser('generate')
     parser_generate.set_defaults(func=generate_db)
     parser_generate.add_argument('instrums', nargs='*', help='instrument name(s).  Omit for all.')
     parser_generate.add_argument('--overwrite', action="store_true", default=False,
-                               help="overwrite existing db")
+                               help="overwrite existing")
     parser_generate.add_argument('--force', action="store_true", default=False, help="ignore warnings")
 
     # create sqlite3 database
-    parser_create = subparsers.add_parser('create', help='create an sqlite database')
+    parser_create = subparsers.add_parser('create')
     parser_create.set_defaults(func=create_db)
     parser_create.add_argument('db', type=str, help='database name')
     parser_create.add_argument('columns', nargs='+', help="table column(s)")
     parser_create.add_argument('--force', action="store_true", default=False, help="ignore warnings")
 
     # destroy sqlite3 database
-    parser_destroy = subparsers.add_parser('destroy', help='destroy an sqlite database')
+    parser_destroy = subparsers.add_parser('destroy')
     parser_destroy.set_defaults(func=destroy_db)
     parser_destroy.add_argument('db', type=str, help='database name')
     parser_destroy.add_argument('--force', action="store_true", default=False, help="ignore warnings")
 
     # run server
-    parser_run = subparsers.add_parser('run', help='start the emonitor server')
+    parser_run = subparsers.add_parser('run')
     parser_run.set_defaults(func=run)
     parser_run.add_argument('instrum', type=str, help='serial intrument name')
     parser_run.add_argument('-o', '--output', action="store_true", default=False,
