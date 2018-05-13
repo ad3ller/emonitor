@@ -1,9 +1,11 @@
 emonitor
 ========
 
-Read and record data from serial instruments with python.
+A stupidly simple command-line programm for reading and recording data from serial instruments.
 
-Tested using a Pfeiffer Maxigauge vacuum pressure gauge reader and a Lakeshore 336 temperature controller.
+Written using python 3 and tested on widows 10 and ubuntu 16.04.
+
+Example configuration for a Pfeiffer Maxigauge vacuum pressure gauge reader and a Lakeshore 336 temperature controller.
 
 Install
 -------
@@ -20,7 +22,7 @@ Install using setuptools.
 Quick Start
 -----------
 
-`emonitor` can be started from a terminal with the command `run` and
+`emonitor` can be started from a terminal using the sub-command `run` and
 the instrument name.
 
 .. code-block:: bash
@@ -36,11 +38,10 @@ the instrument name.
     ^C
     Stopping emonitor.
 
-
 Configuration
 -------------
 
-Communication with a serial instrument is configured using `instrum.ini`.  To list configured instruments,
+Communication with a serial instrument is configured using `~/.emonitor/instrum.ini`.  To list the configured instruments,
 
 .. code-block:: bash
 
@@ -63,13 +64,13 @@ To view the settings for a particular instrument,
     port = COM8
     timeout = 1
 
-And to modify a serial setting,
+And to modify a setting,
 
 .. code-block:: bash
 
     $ emonitor set lakeshore336 --key "port" --value "COM7"
 
-To configure a new instrument you will need to know the hardware serial settings and the `cmd` that `emonitor` can use to query the instrument.
+To configure a new instrument you will need to know the serial settings and the `cmd` that `emonitor` can use to query the hardware. Resonses can be formatted using `regex`.
 
 Output
 ------
@@ -88,7 +89,7 @@ Each instrument can be associated with its own SQLite database.  Set the databas
 
     $ emonitor set simulate --key db --value simulate_2018
 
-`generate` will initialise a database with a table that has columns that match the configured sensor names,
+The sub-command `generate` creates an SQLite database for a given instrument with a table called `data` that has columns that match its sensor names,
 
 .. code-block:: bash
 
