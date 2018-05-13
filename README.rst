@@ -70,7 +70,7 @@ And to modify a setting,
 
     $ emonitor set lakeshore336 --key "port" --value "COM7"
 
-To configure a new instrument you will need to know the serial settings and the `cmd` that `emonitor` can use to query the hardware. Resonses can be formatted using `regex`.
+To configure a new instrument you will need to know the serial settings and the `cmd` that `emonitor` can use to query the hardware. Responses can be formatted using `regex`.
 
 Output
 ------
