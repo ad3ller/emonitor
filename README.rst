@@ -1,7 +1,7 @@
 emonitor
 ========
 
-A stupidly simple command-line programm for reading and recording data from serial instruments.
+A stupidly simple command-line program for reading and recording data from serial instruments.
 
 Written using python 3 and tested on widows 10 and ubuntu 16.04.
 
