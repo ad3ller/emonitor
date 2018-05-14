@@ -75,11 +75,15 @@ To configure a new instrument you will need to know the serial settings and the 
 Output
 ------
 
+**Text file**
+
 To store the sensor readings, simply redirect the output to a file (comma delimited).
 
 .. code-block:: bash
 
     $ emonitor run simulate --wait 10 > "measurement.dat"
+
+**SQLite**
 
 Or you can send them to an SQLite database.  This is a better option when running `emonitor` for long periods of time but it requires some extra setup.
 
