@@ -38,6 +38,8 @@ the instrument name.
     ^C
     Stopping emonitor.
 
+The program queries the instrument for its sensor readings. Waits. And repeats.
+
 Configuration
 -------------
 
