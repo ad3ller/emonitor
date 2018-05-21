@@ -5,7 +5,7 @@ A stupidly simple command-line program for reading and recording data from seria
 
 Requires python 3.6+. Tested using Anaconda on Windows 10 and Ubuntu 16.04.
 
-includes example configuration for a Pfeiffer Maxigauge vacuum pressure gauge reader and a Lakeshore 336 temperature controller.
+Includes example configuration for a Pfeiffer Maxigauge vacuum pressure gauge reader and a Lakeshore 336 temperature controller.
 
 Install
 -------
