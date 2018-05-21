@@ -22,7 +22,7 @@ Install using setuptools.
 Quick Start
 -----------
 
-`emonitor` can be started from a terminal using the sub-command `run` and
+`emonitor` can be started from a terminal (or Anaconda prompt) using the sub-command `run` and
 the instrument name.
 
 .. code-block:: bash
