@@ -3,9 +3,9 @@ emonitor
 
 A stupidly simple command-line program for reading and recording data from serial instruments.
 
-Written using python 3 and tested using Anaconda on Windows 10 and Ubuntu 16.04.
+Requires python 3.6+. Tested using Anaconda on Windows 10 and Ubuntu 16.04.
 
-Example configuration for a Pfeiffer Maxigauge vacuum pressure gauge reader and a Lakeshore 336 temperature controller.
+includes example configuration for a Pfeiffer Maxigauge vacuum pressure gauge reader and a Lakeshore 336 temperature controller.
 
 Install
 -------
