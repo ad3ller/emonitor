@@ -97,7 +97,7 @@ Each instrument can be associated with its own SQLite database.  Set the databas
 
     $ emonitor set simulate --key db --value simulate_2018
 
-The sub-command `generate` creates an SQLite database for a given instrument with a table called `data` that has columns that match its sensor names,
+The sub-command `generate` creates an SQLite database for a given instrument with a table called `data` which has columns that match the sensor names,
 
 .. code-block:: bash
 
