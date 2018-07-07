@@ -80,7 +80,7 @@ Output
 Text file
 +++++++++
 
-To store the sensor readings, simply redirect the output to a file (comma delimited).
+The simplest way to store sensor readings is to redirect emonitor's output to a file (comma delimited).
 
 .. code-block:: bash
 
