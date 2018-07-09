@@ -14,7 +14,7 @@ import sqlite3
 from humanize import naturalsize
 from .core import DATA_DIRE, INSTRUM_FILE, FakeSerialInstrument, SerialInstrument
 from .tools import db_init, db_check, db_insert, db_count, db_describe
-
+TABLE = "data"
 # config
 
 def overwrite(config):
@@ -119,8 +119,8 @@ def describe_db(args, config):
     else:
         # info
         db = sqlite3.connect(fil)
-        num_rows = db_count(db, 'data')
-        info = db_describe(db, 'data')
+        num_rows = db_count(db, TABLE)
+        info = db_describe(db, TABLE)
         db.close()
         cols = [row[1] for row in info]
         # output
@@ -163,7 +163,7 @@ def generate_db(args, config):
             if not args.quiet:
                 print("Creating %s.db with columns"%(db_name), columns)
             db = sqlite3.connect(fil)
-            db_init(db, 'data', columns)
+            db_init(db, TABLE, columns)
             db.close()
 
 def create_db(args, config):
@@ -178,7 +178,7 @@ def create_db(args, config):
         else:
             raise Exception("Database already exists.  Use --force to overwrite.")
     db = sqlite3.connect(fil)
-    db_init(db, 'data', args.columns)
+    db_init(db, TABLE, args.columns)
     db.close()
 
 def destroy_db(args, config):
@@ -226,7 +226,7 @@ def run(args, config):
                 if not os.path.isfile(fil):
                     raise Exception("Database %s does not exists.  Use generate or create."%(settings['db'] + '.db'))
                 db = sqlite3.connect(fil)
-                db_check(db, 'data', columns)
+                db_check(db, TABLE, columns)
         # header
         if tty:
             if not args.quiet:
@@ -251,7 +251,7 @@ def run(args, config):
                     print(', '.join(values))
                 if args.output:                               
                     # send data
-                    db_insert(db, 'data', columns, values, debug=debug)
+                    db_insert(db, TABLE, columns, values, debug=debug)
             ## reset
             time.sleep(args.wait)
     except KeyboardInterrupt:
