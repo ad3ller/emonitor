@@ -55,7 +55,7 @@ def db_count(conn, table, debug=False):
     cursor.close()
     return num_rows
 
-def db_desc(conn, table, debug=False):
+def db_describe(conn, table, debug=False):
     """ get sqlite database structure
     """
     sql = "PRAGMA table_info(%s);"%(table)

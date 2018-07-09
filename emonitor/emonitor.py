@@ -13,7 +13,7 @@ import argparse
 import sqlite3
 from humanize import naturalsize
 from .core import DATA_DIRE, INSTRUM_FILE, FakeSerialInstrument, SerialInstrument
-from .tools import db_init, db_check, db_insert, db_count, db_desc
+from .tools import db_init, db_check, db_insert, db_count, db_describe
 
 # config
 
@@ -120,7 +120,7 @@ def describe_db(args, config):
         # info
         db = sqlite3.connect(fil)
         num_rows = db_count(db, 'data')
-        info = db_desc(db, 'data')
+        info = db_describe(db, 'data')
         db.close()
         cols = [row[1] for row in info]
         # output
