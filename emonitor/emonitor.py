@@ -12,9 +12,9 @@ import configparser
 import argparse
 import sqlite3
 from humanize import naturalsize
-from .core import DATA_DIRE, INSTRUM_FILE, FakeSerialInstrument, SerialInstrument
+from .core import TABLE, DATA_DIRE, INSTRUM_FILE, FakeSerialInstrument, SerialInstrument
 from .tools import db_init, db_check, db_insert, db_count, db_describe
-TABLE = "data"
+
 # config
 
 def overwrite(config):
