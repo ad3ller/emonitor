@@ -47,4 +47,6 @@ def test_tquery():
     assert np.array_equal(df.values, vals)
 
 def test_clean():
+    CONN.close()
     os.remove(DB)
+
