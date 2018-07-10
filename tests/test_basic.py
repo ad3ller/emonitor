@@ -8,5 +8,4 @@ import os
 from emonitor.core import INSTRUM_FILE
 
 def test_instrum_exists():
-    """ """
     assert os.path.exists(INSTRUM_FILE)

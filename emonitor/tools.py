@@ -21,11 +21,13 @@ def db_path(name):
     return fil
 
 
-def db_init(conn, table, columns):
+def db_init(conn, table, columns, debug=False):
     """ initialize sqlite database
     """
-    template = "CREATE TABLE %s(`TIMESTAMP` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, %s)"
-    sql = template%(table, ", ".join(['`' + str(c) + '` DOUBLE DEFAULT NULL' for c in columns]))
+    column_str = ", ".join(['`' + str(c) + '` DOUBLE DEFAULT NULL' for c in columns])
+    sql = f"CREATE TABLE {table}(`TIMESTAMP` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, {column_str});"
+    if debug:
+        print(sql)
     cursor = conn.cursor()
     cursor.execute(sql)
     cursor.close()
@@ -33,7 +35,7 @@ def db_init(conn, table, columns):
 def db_check(conn, table, columns, debug=False):
     """ check sqlite database
     """
-    sql = "SELECT * FROM %s"%(table)
+    sql = f"SELECT * FROM {table};"
     if debug:
         print(sql)
     cursor = conn.cursor()
@@ -41,13 +43,13 @@ def db_check(conn, table, columns, debug=False):
     db_columns = list(next(zip(*cursor.description)))
     for col in columns:
         if col not in db_columns:
-            raise Exception("column %s not in sqlite database"%(col))
+            raise Exception(f"column `{col}` not in sqlite database")
     cursor.close()
 
 def db_count(conn, table, debug=False):
     """ count rows in sqlite table
     """
-    sql = "SELECT COUNT(*) as count FROM %s;"%(table)
+    sql = f"SELECT COUNT(*) as count FROM {table};"
     if debug:
         print(sql)
     cursor = conn.cursor()
@@ -58,7 +60,7 @@ def db_count(conn, table, debug=False):
 def db_describe(conn, table, debug=False):
     """ get sqlite database structure
     """
-    sql = "PRAGMA table_info(%s);"%(table)
+    sql = f"PRAGMA table_info({table});"
     if debug:
         print(sql)
     cursor = conn.cursor()
@@ -67,11 +69,9 @@ def db_describe(conn, table, debug=False):
     return info
 
 def db_insert(conn, table, columns, values, debug=False):
-    """ INSERT INTO {table}({columns}) VALUES ({values});
+    """ INSERT INTO {table} {columns} VALUES {values};
     """
-    values = ["'%s'"%v for v in values]
-    columns = ["'%s'"%v for v in columns]
-    sql = "INSERT INTO %s(%s) VALUES (%s)"%(table, ", ".join(columns), ", ".join(values))
+    sql = f"INSERT INTO {table} {columns} VALUES {values};"
     if debug:
         print(sql)
     cursor = conn.cursor()
@@ -99,7 +99,7 @@ def tquery(conn, start=None, end=None, **kwargs):
         kwargs:
             delta=datetime.timedelta(hours=4)
                                      time to look back in live mode   datetime.timedelta
-            table='data'             name of table in database     str
+            table='data'             name of table in database        str
             limit=6000               max number of rows               int
             tcol='TIMESTAMP'         timestamp column name            str
             full_resolution=False    No limit - return everything     bool
@@ -123,21 +123,15 @@ def tquery(conn, start=None, end=None, **kwargs):
     # SQL query
     if full_resolution or limit is None:
         reorder = False
-        sql = "SELECT * FROM `" + table + "` WHERE `" + tcol + "` BETWEEN '" + \
-             start.strftime("%Y-%m-%d %H:%M:%S") + "' AND '" + \
-             end.strftime("%Y-%m-%d %H:%M:%S") + "';"
+        sql = f"SELECT * FROM `{table}` WHERE `{tcol}` BETWEEN '{start}' AND '{end}';"
     # check start and end are on the same day
     elif end - datetime.timedelta(days=1) < start:
         reorder = False
-        sql = "SELECT * FROM `" + table + "` WHERE `" + tcol + "` BETWEEN '" + \
-             start.strftime("%Y-%m-%d %H:%M:%S") + "' AND '" + \
-             end.strftime("%Y-%m-%d %H:%M:%S") + "' LIMIT " + str(limit) + ";"
+        sql = f"SELECT * FROM `{table}` WHERE `{tcol}` BETWEEN '{start}' AND '{end}' LIMIT {limit};"
     else:
         # if time span is more than 1 day randomly sample measurements from range
         reorder = True
-        sql = "SELECT * FROM `" + table + "` WHERE `" + tcol + "` BETWEEN '" + \
-             start.strftime("%Y-%m-%d %H:%M:%S") + "' AND '" + \
-             end.strftime("%Y-%m-%d %H:%M:%S") + "' ORDER BY RANDOM() LIMIT " + str(limit) + ";"
+        sql = f"SELECT * FROM `{table}` WHERE `{tcol}` BETWEEN '{start}' AND '{end}' ORDER BY RANDOM() LIMIT {limit};"
     if debug:
         print(sql)
     result = pd.read_sql_query(sql, conn, coerce_float=coerce_float, parse_dates=[tcol])
