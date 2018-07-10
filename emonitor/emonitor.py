@@ -201,12 +201,6 @@ def run(args, config):
     header = not args.no_header
     settings = dict(config.items(args.instrum))
     columns = ('TIMESTAMP',) + tuple([sen.strip() for sen in settings['sensors'].split(',')])
-    # ignore some values
-    if "nan_values" in settings:
-        # TODO filter nan_values from response
-        nan_values = list([sen.strip() for sen in settings['nan_values'].split(',')])
-    else:
-        nan_values = None
     db = None
     debug = False
     if debug and tty:
