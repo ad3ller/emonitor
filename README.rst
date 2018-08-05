@@ -43,7 +43,7 @@ The program queries the instrument for its sensor readings. Waits. And repeats.
 Configuration
 -------------
 
-Communication with a serial instrument is configured using `~/.emonitor/instrum.ini`.  To list the configured instruments,
+Communication with a serial instrument is configured using `~/.emonitor/instrum.ini`, which can be edited from the command line. To list the configured instruments,
 
 .. code-block:: bash
 
