@@ -27,7 +27,7 @@ the instrument name.
 
 .. code-block:: bash
 
-    $ emonitor run simulate --wait 10
+    $ emonitor run fake --wait 10
     Starting emonitor. Use Ctrl-C to stop.
 
               TIMESTAMP            A	        B	        C
@@ -48,7 +48,7 @@ Communication with a serial instrument is configured using `~/.emonitor/instrum.
 .. code-block:: bash
 
     $ emonitor ls
-    ['simulate', 'maxigauge', 'lakeshore336']
+    ['fake', 'maxigauge', 'lakeshore336']
 
 To view the settings for a particular instrument,
 
@@ -84,25 +84,26 @@ The simplest way to store sensor readings is to redirect emonitor's output to a 
 
 .. code-block:: bash
 
-    $ emonitor run simulate --wait 10 > "measurement.dat"
+    $ emonitor run fake --wait 10 > "fake.dat"
 
 SQLite
 ++++++
 
-Or you can send them to an SQLite database.  This is a better option when running `emonitor` for long periods of time but it requires some extra setup.
+Or you can send them to an SQLite database.  This is a much better option, especially when running `emonitor` for long periods
+of time but it requires some extra setup.
 
 Each instrument can be associated with its own SQLite database.  Set the database names in `instrum.ini`.
 
 .. code-block:: bash
 
-    $ emonitor set simulate --key db --value simulate_2018
+    $ emonitor set fake --key db --value fake_2018
 
 The sub-command `generate` creates an SQLite database for a given instrument with a table called `data` which has columns that match the sensor names,
 
 .. code-block:: bash
 
-    $ emonitor generate simulate
-    Creating simulate_2018.db with columns ['A', 'B', 'C', 'D']
+    $ emonitor generate fake
+    Creating fake_2018.db with columns ['A', 'B', 'C', 'D']
 
 Enable SQLite output when running `emonitor` using the `--output` flag.
 

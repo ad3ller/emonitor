@@ -207,7 +207,7 @@ def run(args, config):
         print("DEBUG enabled")
     try:
         # serial connection
-        if args.instrum == 'simulate':
+        if args.instrum in ['simulate', 'fake']:
             instrum = FakeSerialInstrument(settings)
         else:
             instrum = SerialInstrument(settings)
