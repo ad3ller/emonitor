@@ -71,7 +71,8 @@ def db_describe(conn, table, debug=False):
 def db_insert(conn, table, columns, values, debug=False):
     """ INSERT INTO {table} {columns} VALUES {values};
     """
-    sql = f"INSERT INTO {table} {columns} VALUES {values};"
+    col_str = str(columns).replace("'", "")
+    sql = f"INSERT INTO {table} {col_str} VALUES {values};"
     if debug:
         print(sql)
     cursor = conn.cursor()

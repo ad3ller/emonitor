@@ -10,7 +10,9 @@ import glob
 import time
 import configparser
 import argparse
+import getpass
 import sqlite3
+import pymysql
 from humanize import naturalsize
 from .core import TABLE, DATA_DIRE, INSTRUM_FILE, FakeSerialInstrument, SerialInstrument
 from .tools import db_init, db_check, db_insert, db_count, db_describe
@@ -202,6 +204,7 @@ def run(args, config):
     settings = dict(config.items(args.instrum))
     columns = ('TIMESTAMP',) + tuple([sen.strip() for sen in settings['sensors'].split(',')])
     db = None
+    sql_conn = None
     debug = False
     if debug and tty:
         print("DEBUG enabled")
@@ -221,6 +224,22 @@ def run(args, config):
                     raise Exception("Database %s does not exists.  Use generate or create."%(settings['db'] + '.db'))
                 db = sqlite3.connect(fil)
                 db_check(db, TABLE, columns)
+        if args.sql:
+            ## get sql database username and password
+            assert 'sql_host' in settings, "sql_host not specified."
+            assert 'sql_port' in settings, "sql_port not specified."
+            assert 'sql_db' in settings, "sql_db not specified."
+            assert 'sql_table' in settings, "sql_table not specified."
+            if 'sql_user' not in settings:
+                settings['sql_user'] = input('SQL user:')
+            if 'sql_passwd' not in settings:
+                prompt = f"{settings['sql_user']}@{settings['sql_host']} enter password:"
+                settings['sql_passwd'] = getpass.getpass(prompt=prompt, stream=sys.stderr)
+            sql_conn = pymysql.connect(host=settings['sql_host'],
+                                       port=int(settings['sql_port']),
+                                       user=settings['sql_user'],
+                                       password=settings['sql_passwd'],
+                                       database=settings['sql_db'])
         # header
         if tty:
             if not args.quiet:
@@ -246,6 +265,9 @@ def run(args, config):
                 if args.output:                               
                     # send data
                     db_insert(db, TABLE, columns, values, debug=debug)
+                if args.sql:
+                    # sql data
+                    db_insert(sql_conn, settings['sql_table'], columns, values, debug=debug)
             ## reset
             time.sleep(args.wait)
     except KeyboardInterrupt:
@@ -261,6 +283,8 @@ def run(args, config):
         instrum.close()
         if db is not None:
             db.close()
+        if sql_conn is not None:
+            sql_conn.close()
 
 DESCRIPTION = """
     config
@@ -281,7 +305,11 @@ DESCRIPTION = """
                         configured instruments
     create              create sqlite database
     destroy             destroy sqlite database
-    
+
+    sql
+    ---
+    passwd              store password for an SQL server
+
     emonitor
     --------
     run                 start emonitor
@@ -387,6 +415,8 @@ def main():
     parser_run.add_argument('instrum', type=str, help='serial intrument name')
     parser_run.add_argument('-o', '--output', action="store_true", default=False,
                             help='enable SQLite output')
+    parser_run.add_argument('-s', '--sql', action="store_true", default=False,
+                            help='enable output to SQL server output')
     parser_run.add_argument('-w', '--wait', type=float, default=15.0,
                             help='wait time (s) between queries')
     parser_run.add_argument('-k', '--keep_open', action="store_true", default=False,
