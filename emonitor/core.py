@@ -13,6 +13,7 @@ import serial
 USER_DIRE = os.path.join(os.path.expanduser("~"), '.emonitor')
 DATA_DIRE = os.path.join(USER_DIRE, 'data')
 INSTRUM_FILE = os.path.join(USER_DIRE, 'instrum.ini')
+KEY_FILE = os.path.join(USER_DIRE, 'private.key')
 TABLE = 'data'
 # special characters
 CR = "\x0D"

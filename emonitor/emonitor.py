@@ -13,8 +13,9 @@ import argparse
 import getpass
 import sqlite3
 import pymysql
+from cryptography.fernet import Fernet
 from humanize import naturalsize
-from .core import TABLE, DATA_DIRE, INSTRUM_FILE, FakeSerialInstrument, SerialInstrument
+from .core import TABLE, DATA_DIRE, INSTRUM_FILE, KEY_FILE, FakeSerialInstrument, SerialInstrument
 from .tools import db_init, db_check, db_insert, db_count, db_describe
 
 # config
@@ -70,6 +71,8 @@ def delete_instrument(args, config):
 
 def set_instrument_attribute(args, config):
     """ set an instrument attribute """
+    if args.key == "sql_passwd":
+        raise ValueError("Use passwd tool to store passwords.")
     if args.instrum == 'DEFAULT' or config.has_section(args.instrum):
         config.set(args.instrum, args.key, args.value)
     else:
@@ -193,6 +196,30 @@ def destroy_db(args, config):
     else:
         raise Exception("Failed to destory. Database not found.")
 
+# SQL server
+
+def passwd(args, config):
+    """ store SQL password.  
+    """
+    if args.instrum != 'DEFAULT' and not config.has_section(args.instrum):
+        raise NameError("%s was not found in the config file"%(args.instrum))
+    key = None
+    if os.path.isfile(KEY_FILE):
+        with open(KEY_FILE, "rb") as fil:
+            key = fil.readline()
+    if key is None or key == b'':
+        # generate key
+        key = Fernet.generate_key()
+        with open(KEY_FILE, "wb") as fil:
+            fil.write(key)
+        os.chmod(KEY_FILE, 0o600)
+    f = Fernet(key)
+    prompt = f"enter password for {args.instrum}:"
+    _passwd = bytes(getpass.getpass(prompt=prompt, stream=sys.stderr), 'utf-8')
+    _passwd = f.encrypt(_passwd).decode('utf8')
+    config.set(args.instrum, "sql_passwd", _passwd)
+    overwrite(config)
+
 # emonitor
 
 def run(args, config):
@@ -234,11 +261,19 @@ def run(args, config):
                 settings['sql_user'] = input('SQL user:')
             if 'sql_passwd' not in settings:
                 prompt = f"{settings['sql_user']}@{settings['sql_host']} enter password:"
-                settings['sql_passwd'] = getpass.getpass(prompt=prompt, stream=sys.stderr)
+                _passwd = getpass.getpass(prompt=prompt, stream=sys.stderr)
+            else:
+                # decrypt password
+                assert os.path.isfile(KEY_FILE), f"{KEY_FILE} not found.  Create using passwd."
+                with open(KEY_FILE, "rb") as fil:
+                    key = fil.readline()
+                f = Fernet(key)
+                _passwd = f.decrypt(bytes(settings['sql_passwd'], 'utf8')).decode('utf8')
+            # connect
             sql_conn = pymysql.connect(host=settings['sql_host'],
                                        port=int(settings['sql_port']),
                                        user=settings['sql_user'],
-                                       password=settings['sql_passwd'],
+                                       password=_passwd,
                                        database=settings['sql_db'])
         # header
         if tty:
@@ -408,6 +443,12 @@ def main():
     parser_destroy.set_defaults(func=destroy_db)
     parser_destroy.add_argument('db', type=str, help='database name')
     parser_destroy.add_argument('--force', action="store_true", default=False, help="ignore warnings")
+
+    # SQL database password
+    parser_passwd = subparsers.add_parser('passwd')
+    parser_passwd.set_defaults(func=passwd)
+    parser_passwd.add_argument('instrum', type=str, nargs='?', default="DEFAULT",
+                               help='intrument name [if None then DEFAULT]')
 
     # run server
     parser_run = subparsers.add_parser('run')
