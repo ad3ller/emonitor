@@ -275,6 +275,12 @@ def run(args, config):
                                        user=settings['sql_user'],
                                        password=_passwd,
                                        database=settings['sql_db'])
+            if 'sql_column_fmt' in settings:
+                column_fmt = settings['sql_column_fmt']
+                sql_columns = ('TIMESTAMP',) + tuple([column_fmt.replace('<sensor>', sen.strip()) for sen in settings['sensors'].split(',')])
+            else:
+                sql_columns = ('TIMESTAMP',) + tuple([sen.strip() for sen in settings['sensors'].split(',')])
+
         # header
         if tty:
             if not args.quiet:
@@ -302,7 +308,7 @@ def run(args, config):
                     db_insert(db, TABLE, columns, values, debug=debug)
                 if args.sql:
                     # sql data
-                    db_insert(sql_conn, settings['sql_table'], columns, values, debug=debug)
+                    db_insert(sql_conn, settings['sql_table'], sql_columns, values, debug=debug)
             ## reset
             time.sleep(args.wait)
     except KeyboardInterrupt:
