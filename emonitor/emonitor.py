@@ -156,7 +156,11 @@ def generate_db(args, config):
         # get columns from instrument sensors
         if 'sensors' not in settings:
             raise NameError("'sensors' not configured for %s"%(instrum))
-        columns = [sen.strip() for sen in settings['sensors'].split(',')]
+        if 'column_fmt' in settings:
+            column_fmt = settings['column_fmt']
+            columns = ('TIMESTAMP',) + tuple([column_fmt.replace('<sensor>', sen.strip()) for sen in settings['sensors'].split(',')])
+        else:
+            columns = ('TIMESTAMP',) + tuple([sen.strip() for sen in settings['sensors'].split(',')])
         # sqlite database
         fil = os.path.join(DATA_DIRE, db_name + '.db')
         ## check existing
@@ -215,9 +219,9 @@ def passwd(args, config):
         os.chmod(KEY_FILE, 0o600)
     f = Fernet(key)
     prompt = f"enter password for {args.instrum}:"
-    _passwd = bytes(getpass.getpass(prompt=prompt, stream=sys.stderr), 'utf-8')
-    _passwd = f.encrypt(_passwd).decode('utf8')
-    config.set(args.instrum, "sql_passwd", _passwd)
+    sql_passwd = bytes(getpass.getpass(prompt=prompt, stream=sys.stderr), 'utf-8')
+    sql_passwd = f.encrypt(sql_passwd).decode('utf8')
+    config.set(args.instrum, "sql_passwd", sql_passwd)
     overwrite(config)
 
 # emonitor
@@ -229,7 +233,11 @@ def run(args, config):
     close = not args.keep_open
     header = not args.no_header
     settings = dict(config.items(args.instrum))
-    columns = ('TIMESTAMP',) + tuple([sen.strip() for sen in settings['sensors'].split(',')])
+    if 'column_fmt' in settings:
+        column_fmt = settings['column_fmt']
+        columns = ('TIMESTAMP',) + tuple([column_fmt.replace('<sensor>', sen.strip()) for sen in settings['sensors'].split(',')])
+    else:
+        columns = ('TIMESTAMP',) + tuple([sen.strip() for sen in settings['sensors'].split(',')])
     db = None
     sql_conn = None
     debug = False
@@ -261,26 +269,20 @@ def run(args, config):
                 settings['sql_user'] = input('SQL user:')
             if 'sql_passwd' not in settings:
                 prompt = f"{settings['sql_user']}@{settings['sql_host']} enter password:"
-                _passwd = getpass.getpass(prompt=prompt, stream=sys.stderr)
+                sql_passwd = getpass.getpass(prompt=prompt, stream=sys.stderr)
             else:
                 # decrypt password
                 assert os.path.isfile(KEY_FILE), f"{KEY_FILE} not found.  Create using passwd."
                 with open(KEY_FILE, "rb") as fil:
                     key = fil.readline()
                 f = Fernet(key)
-                _passwd = f.decrypt(bytes(settings['sql_passwd'], 'utf8')).decode('utf8')
+                sql_passwd = f.decrypt(bytes(settings['sql_passwd'], 'utf8')).decode('utf8')
             # connect
             sql_conn = pymysql.connect(host=settings['sql_host'],
                                        port=int(settings['sql_port']),
                                        user=settings['sql_user'],
-                                       password=_passwd,
+                                       password=sql_passwd,
                                        database=settings['sql_db'])
-            if 'sql_column_fmt' in settings:
-                column_fmt = settings['sql_column_fmt']
-                sql_columns = ('TIMESTAMP',) + tuple([column_fmt.replace('<sensor>', sen.strip()) for sen in settings['sensors'].split(',')])
-            else:
-                sql_columns = ('TIMESTAMP',) + tuple([sen.strip() for sen in settings['sensors'].split(',')])
-
         # header
         if tty:
             if not args.quiet:
@@ -308,7 +310,7 @@ def run(args, config):
                     db_insert(db, TABLE, columns, values, debug=debug)
                 if args.sql:
                     # sql data
-                    db_insert(sql_conn, settings['sql_table'], sql_columns, values, debug=debug)
+                    db_insert(sql_conn, settings['sql_table'], columns, values, debug=debug)
             ## reset
             time.sleep(args.wait)
     except KeyboardInterrupt:
