@@ -98,7 +98,7 @@ regex               regular expression to format instrument response
 output settings
 ---------------
 
-See `Output <../output/output.html>`_ for further details.
+See `Output <output.html>`_ for further details.
 
 ==========  =======================================
 name        description   

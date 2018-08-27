@@ -10,10 +10,10 @@ Welcome to emonitor's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   install/install
-   usage/quick_start
-   configure/configure
-   output/output
+   install
+   quick_start
+   configure
+   output
 
 
 Indices and tables
