@@ -432,7 +432,7 @@ def main():
      # auto-create sqlite3 database
     parser_generate = subparsers.add_parser('generate')
     parser_generate.set_defaults(func=generate_db)
-    parser_generate.add_argument('instrums', nargs='*', help='instrument name(s).  Omit for all.')
+    parser_generate.add_argument('instrums', nargs='*', help='instrument name(s) [if None then all].')
     parser_generate.add_argument('-q', '--quiet', action="store_true", default=False,
                             help="no printed output")
     parser_generate.add_argument('--overwrite', action="store_true", default=False,
