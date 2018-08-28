@@ -1,13 +1,10 @@
 Configure
 =========
 
-instrum.ini
------------
-
-Communication with a serial instrument is configured using ``~/.emonitor/instrum.ini``.  This file is also used
+Communication with a serial instrument is configured using `~/.emonitor/instrum.ini`.  This file is also used
 to configure the recording of instrument readings.
 
-The configuration file can be viewed using the ``emonitor`` sub-command, ``config``. ::
+The configuration file can be viewed using ``emonitor config``. ::
 
     $ emonitor config
     [DEFAULT]
@@ -53,7 +50,7 @@ The settings in the `DEFAULT` section are shared by all of the instruments.  The
 
     $ emonitor set --key sql_port --value 3306
 
-The ``set`` sub-command can also be used to assign settings for specific instruments.
+Similarly, ``emonitor set [instrument]`` can be used to assign settings for specific instruments.
 
 ::
 
@@ -65,16 +62,10 @@ or ``copy`` (see ``--help`` for options).
 serial settings
 ---------------
 
-It should be possible to configure `emonitor` to communicate with almost any serial instrument.  
-
-Communication is fascilitated by the pyserial_ package.  Many of the settings listed below are 
-used to initialise an instance of the class serial.Serial_.  Most settings are not mandetory.
-
-.. _pyserial: https://pythonhosted.org/pyserial/
-.. _serial.Serial: https://pyserial.readthedocs.io/en/latest/pyserial_api.html
+It should be possible to configure ``emonitor`` to communicate with most serial instruments using the settings listed below.  
 
 ==================  ==================================================   
-name                description   
+key                 description   
 ==================  ==================================================
 port                device name, e.g., COM1
 baudrate            data rate
@@ -95,19 +86,23 @@ sensors             comma-delimited list of sensor names
 regex               regular expression to format instrument response
 ==================  ==================================================
 
+.. TIP::
+   
+   Serial communication is facilitated by `pyserial <https://pythonhosted.org/pyserial/>`_.  Test settings with `serial.Serial() <https://pyserial.readthedocs.io/en/latest/pyserial_api.html>`_.   
+
 output settings
 ---------------
 
-See `Output <output.html>`_ for further details.
+The items below are used to configure emonitor's output. See `Output <output.html>`_ for further details.
 
 ==========  =======================================
-name        description   
+key         description   
 ==========  =======================================
 db          name of SQLite database
 column_fmt  format column names, e.g., PG\_<sensor>
 sql_host    SQL server ip address
 sql_port    SQL server port number
-sql_user    username with INSERT priviledges
+sql_user    username with INSERT privileges
 sql_passwd  password (encrypted)
 sql_db      name of SQL database
 sql_table   name of SQL table

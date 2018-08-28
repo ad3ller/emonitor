@@ -15,7 +15,7 @@ Set the serial port for instrument `fake`,
    
    $ emonitor set fake --key port --value COM7
 
-Then start an instance of ``emonitor`` for the instrument using the sub-command ``run``,
+Then start an instance of ``emonitor`` using the sub-command ``run``,
 
 ::
 

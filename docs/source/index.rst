@@ -6,6 +6,8 @@
 Welcome to emonitor's documentation!
 ====================================
 
+``emonitor`` is a command-line program for reading and recording data from serial instruments.
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
@@ -14,7 +16,6 @@ Welcome to emonitor's documentation!
    quick_start
    configure
    output
-
 
 Indices and tables
 ==================

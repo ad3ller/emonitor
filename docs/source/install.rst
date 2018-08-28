@@ -1,20 +1,20 @@
 Install
 -------
 
-Clone the latest version of ``emonitor`` from github.com,
+Clone the latest version of ``emonitor`` from `github.com <https://github.com/ad3ller/emonitor>`_,
 
 ::
 
    $ git clone https://github.com/ad3ller/emonitor
    $ cd ./emonitor
 
-Then install using setuptools,
+Then install using `setuptools <https://setuptools.readthedocs.io/en/latest/>`_,
 
 ::
 
    $ python setup.py install
 
-And run tests,
+And run tests with `pytest <https://docs.pytest.org>`_,
 
 ::
 
