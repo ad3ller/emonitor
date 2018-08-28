@@ -5,7 +5,7 @@ A simple command-line program for reading and recording data from serial instrum
 
 Requires python 3.6+. Tested using Anaconda on Windows 10 and Ubuntu 16.04.
 
-Include example configuration for a Pfeiffer Maxigauge vacuum pressure gauge reader and a Lakeshore 336 temperature controller.
+Includes example configuration for a Pfeiffer Maxigauge vacuum pressure gauge reader and a Lakeshore 336 temperature controller.
 
 Install
 -------
