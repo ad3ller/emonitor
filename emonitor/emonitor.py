@@ -157,10 +157,9 @@ def generate_db(args, config):
         if 'sensors' not in settings:
             raise NameError("'sensors' not configured for %s"%(instrum))
         if 'column_fmt' in settings:
-            column_fmt = settings['column_fmt']
-            columns = ('TIMESTAMP',) + tuple([column_fmt.replace('<sensor>', sen.strip()) for sen in settings['sensors'].split(',')])
+            columns = tuple([settings['column_fmt'].replace('<sensor>', sen.strip()) for sen in settings['sensors'].split(',')])
         else:
-            columns = ('TIMESTAMP',) + tuple([sen.strip() for sen in settings['sensors'].split(',')])
+            columns = tuple([sen.strip() for sen in settings['sensors'].split(',')])
         # sqlite database
         fil = os.path.join(DATA_DIRE, db_name + '.db')
         ## check existing
