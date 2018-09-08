@@ -8,6 +8,7 @@ import sys
 import os
 import glob
 import time
+import warnings
 import configparser
 import argparse
 import getpass
@@ -170,7 +171,7 @@ def generate_db(args, config):
         ## create
         if not os.path.exists(fil):
             if not args.quiet:
-                print("Creating %s.db with columns"%(db_name), columns)
+                print(f"Creating {db_name}.db with columns {columns}")
             db = sqlite3.connect(fil)
             db_init(db, TABLE, columns)
             db.close()
@@ -180,12 +181,15 @@ def create_db(args, config):
     '''
     if not isinstance(args.columns, list):
         raise TypeError("Columns must be a list")
-    fil = os.path.join(DATA_DIRE, args.db + '.db')
+    db_name = args.db + '.db'
+    fil = os.path.join(DATA_DIRE, db_name)
     if os.path.isfile(fil):
-        if args.force:
+        if args.overwrite:
             os.remove(fil)
         else:
-            raise Exception("Database already exists.  Use --force to overwrite.")
+            raise Exception("Database already exists.  Use --overwrite.")
+    if not args.quiet:
+        print(f"Creating {db_name} with columns {args.columns}")
     db = sqlite3.connect(fil)
     db_init(db, TABLE, args.columns)
     db.close()
@@ -310,7 +314,19 @@ def run(args, config):
                     db_insert(db, TABLE, columns, values, debug=debug)
                 if args.sql:
                     # sql data
-                    db_insert(sql_conn, settings['sql_table'], columns, values, debug=debug)
+                    try:
+                        db_insert(sql_conn, settings['sql_table'], columns, values, debug=debug)
+                    except:
+                        warnings.warn("SQL connection failed")
+                        # attempt to reconnect
+                        try:
+                            sql_conn = pymysql.connect(host=settings['sql_host'],
+                                                       port=int(settings['sql_port']),
+                                                       user=settings['sql_user'],
+                                                       password=sql_passwd,
+                                                       database=settings['sql_db'])
+                        except:
+                            pass
             ## reset
             time.sleep(args.wait)
     except KeyboardInterrupt:
@@ -332,24 +348,24 @@ def run(args, config):
 DESCRIPTION = """
     config
     ------
-    list (ls)           list instruments
-    config              display instrument configuration
-    new                 add a new instrument
-    copy (cp)           copy instrument
-    delete (rm)         delete instrument
-    set                 set an instrument attribute
-    drop                drop an instrument attribute
+    list (ls)           list devices
+    config              display [device] configuration
+    new                 add device
+    copy (cp)           copy device configuration
+    remove (rm)         remove device
+    set                 set a device attribute
+    drop                drop a device attribute
     
-    sqlite
+    SQLite
     ------
-    show                show sqlite databases
-    describe            describe an sqlite database
-    generate            automatically create sqlite databases for the
-                        configured instruments
-    create              create sqlite database
-    destroy             destroy sqlite database
+    show                show SQLite databases
+    describe            describe an SQLite database
+    generate            automatically create SQLite databases
+                        for the configured devices
+    create              create SQLite database
+    destroy             destroy SQLite database
 
-    sql
+    SQL
     ---
     passwd              store password for an SQL server
 
@@ -374,25 +390,25 @@ def main():
     parser_show = subparsers.add_parser('config')
     parser_show.set_defaults(func=show_config)
     parser_show.add_argument('instrum', type=str, nargs='?', default="__all__",
-                             help='serial intrument name [if None then all]')
+                             help='serial device name [if None then all]')
 
     # new instrument
     parser_new = subparsers.add_parser('new')
     parser_new.set_defaults(func=new_instrument)
-    parser_new.add_argument('output', type=str, help='new intrument name')
+    parser_new.add_argument('output', type=str, help='new device name')
 
     # copy instrument
     parser_copy = subparsers.add_parser('copy', aliases=['cp'])
     parser_copy.set_defaults(func=copy_instrument)
-    parser_copy.add_argument('instrum', type=str, help='existing intrument name')
-    parser_copy.add_argument('output', type=str, help='new intrument name')
+    parser_copy.add_argument('instrum', type=str, help='existing device name')
+    parser_copy.add_argument('output', type=str, help='new device name')
     parser_copy.add_argument('--force', action="store_true", default=False,
                              help="ignore warnings")
 
     # remove instrument
-    parser_delete = subparsers.add_parser('delete', aliases=['rm'])
+    parser_delete = subparsers.add_parser('remove', aliases=['rm'])
     parser_delete.set_defaults(func=delete_instrument)
-    parser_delete.add_argument('instrum', type=str, help='intrument name')
+    parser_delete.add_argument('instrum', type=str, help='device name')
     parser_delete.add_argument('--force', action="store_true", default=False,
                                help="ignore warnings")
 
@@ -400,23 +416,23 @@ def main():
     parser_set = subparsers.add_parser('set')
     parser_set.set_defaults(func=set_instrument_attribute)
     parser_set.add_argument('instrum', type=str, nargs='?', default="DEFAULT",
-                            help='intrument name [if None then DEFAULT]')
+                            help='device name [if None then DEFAULT]')
     parser_set.add_argument('-k', '--key', default=None,
                             help='attribute key, e.g., "port"')
     parser_set.add_argument('-v', '--value', default=None,
                             help='attribute value, e.g., "COM7"')
     parser_set.add_argument('-p', '--print', action="store_true", default=False,
-                            help="print instrument configuration")
+                            help="display device configuration")
 
     # remove attrib
     parser_drop = subparsers.add_parser('drop')
     parser_drop.set_defaults(func=drop_instrument_attribute)
     parser_drop.add_argument('instrum', type=str, nargs='?', default="DEFAULT",
-                             help='intrument name [if None then DEFAULT]')
+                             help='device name [if None then DEFAULT]')
     parser_drop.add_argument('key', default=None,
                              help='attribute key, e.g., "port"')
     parser_drop.add_argument('-p', '--print', action="store_true", default=False,
-                             help="print instrument configuration")
+                             help="display device configuration")
 
     # list sqlite database tables
     parser_show = subparsers.add_parser('show')
@@ -432,9 +448,9 @@ def main():
      # auto-create sqlite3 database
     parser_generate = subparsers.add_parser('generate')
     parser_generate.set_defaults(func=generate_db)
-    parser_generate.add_argument('instrums', nargs='*', help='instrument name(s) [if None then all].')
+    parser_generate.add_argument('instrums', nargs='*', help='device name(s) [if None then all].')
     parser_generate.add_argument('-q', '--quiet', action="store_true", default=False,
-                            help="no printed output")
+                                 help="no printed output")
     parser_generate.add_argument('--overwrite', action="store_true", default=False,
                                  help="overwrite existing")
     parser_generate.add_argument('--force', action="store_true", default=False, help="ignore warnings")
@@ -444,7 +460,10 @@ def main():
     parser_create.set_defaults(func=create_db)
     parser_create.add_argument('db', type=str, help='database name')
     parser_create.add_argument('columns', nargs='+', help="table column(s)")
-    parser_create.add_argument('--force', action="store_true", default=False, help="ignore warnings")
+    parser_create.add_argument('-q', '--quiet', action="store_true", default=False,
+                               help="no printed output")
+    parser_create.add_argument('--overwrite', action="store_true", default=False,
+                               help="overwrite existing")
 
     # destroy sqlite3 database
     parser_destroy = subparsers.add_parser('destroy')
@@ -456,12 +475,12 @@ def main():
     parser_passwd = subparsers.add_parser('passwd')
     parser_passwd.set_defaults(func=passwd)
     parser_passwd.add_argument('instrum', type=str, nargs='?', default="DEFAULT",
-                               help='intrument name [if None then DEFAULT]')
+                               help='device name [if None then DEFAULT]')
 
     # run server
     parser_run = subparsers.add_parser('run')
     parser_run.set_defaults(func=run)
-    parser_run.add_argument('instrum', type=str, help='serial intrument name')
+    parser_run.add_argument('instrum', type=str, help='serial device name')
     parser_run.add_argument('-o', '--output', action="store_true", default=False,
                             help='enable SQLite output')
     parser_run.add_argument('-s', '--sql', action="store_true", default=False,
