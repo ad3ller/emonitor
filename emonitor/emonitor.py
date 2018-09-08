@@ -76,7 +76,12 @@ def set_instrument_attribute(args, config):
     if args.key == "sql_passwd":
         raise ValueError("Use passwd tool to store passwords.")
     if args.instrum == 'DEFAULT' or config.has_section(args.instrum):
-        config.set(args.instrum, args.key, args.value)
+        if len(args.value) == 1:
+            config.set(args.instrum, args.key[0], args.value[0])
+        else:
+            # flatten to string
+            val_str = ", ".join(args.value)
+            config.set(args.instrum, args.key[0], val_str)
     else:
         raise NameError("%s was not found in the config file"%(args.instrum))
     if args.print:
@@ -210,7 +215,7 @@ def passwd(args, config):
     """ store SQL password.  
     """
     if args.instrum != 'DEFAULT' and not config.has_section(args.instrum):
-        raise NameError("%s was not found in the config file"%(args.instrum))
+        raise ValueError("%s was not found in the config file"%(args.instrum))
     key = None
     if os.path.isfile(KEY_FILE):
         with open(KEY_FILE, "rb") as fil:
@@ -417,9 +422,9 @@ def main():
     parser_set.set_defaults(func=set_instrument_attribute)
     parser_set.add_argument('instrum', type=str, nargs='?', default="DEFAULT",
                             help='device name [if None then DEFAULT]')
-    parser_set.add_argument('-k', '--key', default=None,
+    parser_set.add_argument('-k', '--key', nargs=1, required=True,
                             help='attribute key, e.g., "port"')
-    parser_set.add_argument('-v', '--value', default=None,
+    parser_set.add_argument('-v', '--value', nargs='+', required=True,
                             help='attribute value, e.g., "COM7"')
     parser_set.add_argument('-p', '--print', action="store_true", default=False,
                             help="display device configuration")
@@ -429,7 +434,7 @@ def main():
     parser_drop.set_defaults(func=drop_instrument_attribute)
     parser_drop.add_argument('instrum', type=str, nargs='?', default="DEFAULT",
                              help='device name [if None then DEFAULT]')
-    parser_drop.add_argument('key', default=None,
+    parser_drop.add_argument('-k', '--key', required=True,
                              help='attribute key, e.g., "port"')
     parser_drop.add_argument('-p', '--print', action="store_true", default=False,
                              help="display device configuration")

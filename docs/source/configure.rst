@@ -1,7 +1,7 @@
 Configure
 =========
 
-Communication with a serial device -- or *instrument* -- is configured using `~/.emonitor/instrum.ini`.  This file is also used
+Communication with a serial device (aka an *instrument*) is configured using `~/.emonitor/instrum.ini`.  This file is also used
 to configure the recording of sensor data.
 
 The configuration file can be viewed using ``emonitor config``. ::
@@ -44,7 +44,7 @@ The configuration file can be viewed using ``emonitor config``. ::
     port = COM8
     timeout = 1
 
-The settings in the `DEFAULT` section are shared by all of the devices.  These can be assigned using the ``set`` sub-command.
+The settings in the `DEFAULT` section are shared by all of the devices.  These can be assigned using ``emonitor set``.
 
 ::
 
