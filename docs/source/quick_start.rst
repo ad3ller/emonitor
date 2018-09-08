@@ -19,7 +19,7 @@ And specify which sensors to read,
 
 ::
 
-    emonitor set fake --key sensors --value A B C
+    $ emonitor set fake --key sensors --value A B C
 
 
 Then run ``emonitor`` for this device,
