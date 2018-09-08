@@ -1,7 +1,7 @@
 Quick Start
 -----------
 
-List the available serial instruments,
+List the configured serial devices,
 
 ::
 
@@ -9,13 +9,13 @@ List the available serial instruments,
    ['fake', 'maxigauge', 'lakeshore336']
 
 
-Set the serial port for instrument `fake`,
+Set the serial port for `fake`,
 
 ::
    
    $ emonitor set fake --key port --value COM7
 
-Then start an instance of ``emonitor`` using the sub-command ``run``,
+Then run ``emonitor`` for this device,
 
 ::
 
@@ -30,4 +30,4 @@ Then start an instance of ``emonitor`` using the sub-command ``run``,
     ^C
     Stopping emonitor.
 
-The program queries the instrument for its sensor readings. Waits. And repeats.
+This queries the device for its sensor readings. Waits. And repeats.

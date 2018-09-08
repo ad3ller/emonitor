@@ -1,8 +1,8 @@
 Configure
 =========
 
-Communication with a serial instrument is configured using `~/.emonitor/instrum.ini`.  This file is also used
-to configure the recording of instrument readings.
+Communication with a serial device -- or *instrument* -- is configured using `~/.emonitor/instrum.ini`.  This file is also used
+to configure the recording of sensor data.
 
 The configuration file can be viewed using ``emonitor config``. ::
 
@@ -44,25 +44,25 @@ The configuration file can be viewed using ``emonitor config``. ::
     port = COM8
     timeout = 1
 
-The settings in the `DEFAULT` section are shared by all of the instruments.  These can be assigned using the ``set`` sub-command.
+The settings in the `DEFAULT` section are shared by all of the devices.  These can be assigned using the ``set`` sub-command.
 
 ::
 
     $ emonitor set --key sql_port --value 3306
 
-Similarly, ``emonitor set [instrument]`` can be used to assign settings for specific instruments.
+Similarly, ``emonitor set [instrum]`` can be used to assign settings for specific devices.
 
 ::
 
     $ emonitor set lakeshore336 --key port --value COM8
 
-Each serial instrument has a section in the config file.  New sections can be added using the sub-commands ``new`` 
+Each serial device has a section in the config file.  New sections can be added using the sub-commands ``new`` 
 or ``copy`` (see ``--help`` for options).
 
 serial settings
 ---------------
 
-It should be possible to configure ``emonitor`` to communicate with most serial instruments using the settings listed below.  
+It should be possible to configure ``emonitor`` to communicate with most serial devices using the settings listed below.  
 
 ==================  ==================================================   
 key                 description   
@@ -88,12 +88,13 @@ regex               regular expression to format instrument response
 
 .. TIP::
    
-   Serial communication is facilitated by `pyserial <https://pythonhosted.org/pyserial/>`_.  Test settings with `serial.Serial() <https://pyserial.readthedocs.io/en/latest/pyserial_api.html>`_.   
+   Serial communication is facilitated by `pyserial <https://pythonhosted.org/pyserial/>`_.  Test the settings and commands
+   for communicating with a serial device using `serial.Serial() <https://pyserial.readthedocs.io/en/latest/pyserial_api.html>`_.   
 
 output settings
 ---------------
 
-The items below are used to configure emonitor's output. See `Output <output.html>`_ for further details.
+The items below are used to configure emonitor's output. See `here <output.html>`_ for further details.
 
 ==========  =======================================
 key         description   

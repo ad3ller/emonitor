@@ -1,7 +1,7 @@
 emonitor
 ========
 
-A command-line program for reading and recording data from serial instruments.
+A command-line program for reading and recording sensor data from serial devices.
 
 Example configuration for a Pfeiffer Maxigauge vacuum pressure gauge reader and a Lakeshore 336 temperature controller.
 
@@ -23,7 +23,7 @@ Quick Start
 -----------
 
 ``emonitor`` can be started from a terminal (or Anaconda prompt) using the sub-command `run` and
-the instrument name.
+the name of a configured serial device.
 
 .. code-block:: bash
 
@@ -38,73 +38,9 @@ the instrument name.
     ^C
     Stopping emonitor.
 
-The program queries the instrument for its sensor readings. Waits. And repeats.
+This queries the device for its sensor readings. Waits. And repeats.
 
-Configuration
+Documentation
 -------------
 
-Communication with a serial instrument is configured using `~/.emonitor/instrum.ini`, which can be edited from the command line. To list the configured instruments,
-
-.. code-block:: bash
-
-    $ emonitor ls
-    ['fake', 'maxigauge', 'lakeshore336']
-
-To view the settings for a particular instrument,
-
-.. code-block:: bash
-
-    $ emonitor config lakeshore336
-    [lakeshore336]
-    db = temperature
-    sensors = A, B, C
-    cmd = KRDG?<sensor>\r\n
-    parity = O
-    stopbits = 1
-    bytesize = 7
-    baudrate = 57600
-    port = COM8
-    timeout = 1
-
-And to modify a setting,
-
-.. code-block:: bash
-
-    $ emonitor set lakeshore336 --key "port" --value "COM7"
-
-To configure a new instrument you will need to know the serial settings and the `cmd` that `emonitor` can use to query the hardware. Responses can be formatted using `regex`.
-
-Output
-------
-
-Text file
-+++++++++
-
-The simplest way to store sensor readings is to redirect emonitor's output to a file (comma delimited).
-
-.. code-block:: bash
-
-    $ emonitor run fake --wait 10 > "fake.dat"
-
-SQLite
-++++++
-
-Or you can send them to an SQLite database.  This is a much better option, especially when running `emonitor` for long periods
-of time but it requires some extra setup.
-
-Each instrument can be associated with its own SQLite database.  Set the database names in `instrum.ini`.
-
-.. code-block:: bash
-
-    $ emonitor set fake --key db --value fake_2018
-
-The sub-command `generate` creates an SQLite database for a given instrument with a table called `data` which has columns that match the sensor names,
-
-.. code-block:: bash
-
-    $ emonitor generate fake
-    Creating fake_2018.db with columns ['A', 'B', 'C', 'D']
-
-Enable SQLite output when running `emonitor` using the `--output` flag.
-
-See the notebooks for examples for how to plot readings from an SQLite database.
+A guide to using ``emonitor`` is hosted on `emonitor.readthedocs.io <https://emonitor.readthedocs.io>`_.

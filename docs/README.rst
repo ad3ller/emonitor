@@ -5,9 +5,14 @@ emonitor docs
    :target: https://emonitor.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
+These docs are hosted on `emonitor.readthedocs.io <https://emonitor.readthedocs.io>`_.
 
-Build docs using `sphinx <http://www.sphinx-doc.org>`_  (requires `sphinx_rtd_theme <https://sphinx-rtd-theme.readthedocs.io/en/latest/>`_).
+The source files can be built using `sphinx <https://www.sphinx-doc.org>`_, which requires `sphinx_rtd_theme <https://sphinx-rtd-theme.readthedocs.io>`_.
 
 ::
 
+    pip install sphinx_rtd_theme
+
+::
+   
    make html
