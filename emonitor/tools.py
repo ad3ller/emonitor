@@ -5,6 +5,7 @@ Created on Sun Jan 14 21:55:57 2018
 @author: adam
 """
 import os
+import sqlite3
 import datetime
 import pandas as pd
 from .core import DATA_DIRE
@@ -119,6 +120,11 @@ def tquery(conn, start=None, end=None, **kwargs):
     coerce_float = kwargs.get('coerce_float', True)
     dropna = kwargs.get('dropna', True)
     debug = kwargs.get('debug', False)
+    # connection type
+    if isinstance(conn, sqlite3.Connection):
+        rand = "RANDOM()"
+    else:
+        rand = "RAND()"
     # check times
     start, end = get_trange(start, end, delta)
     # SQL query
@@ -132,7 +138,7 @@ def tquery(conn, start=None, end=None, **kwargs):
     else:
         # if time span is more than 1 day randomly sample measurements from range
         reorder = True
-        sql = f"SELECT * FROM `{table}` WHERE `{tcol}` BETWEEN '{start}' AND '{end}' ORDER BY RANDOM() LIMIT {limit};"
+        sql = f"SELECT * FROM `{table}` WHERE `{tcol}` BETWEEN '{start}' AND '{end}' ORDER BY {rand} LIMIT {limit};"
     if debug:
         print(sql)
     result = pd.read_sql_query(sql, conn, coerce_float=coerce_float, parse_dates=[tcol])
