@@ -1,9 +1,12 @@
 emonitor docs
 =============
 
-Requires `sphinx_rtd_theme <https://sphinx-rtd-theme.readthedocs.io/en/latest/>`_.
+.. image:: https://readthedocs.org/projects/emonitor/badge/?version=latest
+   :target: https://emonitor.readthedocs.io/en/latest/?badge=latest
+   :alt: Documentation Status
 
-Build docs using `sphinx <http://www.sphinx-doc.org>`_.
+
+Build docs using `sphinx <http://www.sphinx-doc.org>`_  (requires `sphinx_rtd_theme <https://sphinx-rtd-theme.readthedocs.io/en/latest/>`_).
 
 ::
 
