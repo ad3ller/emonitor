@@ -1,7 +1,7 @@
 Configure
 =========
 
-Communication with a serial device (aka an *instrument*) is configured using `~/.emonitor/instrum.ini`.  This file is also used
+Communication with a serial device is configured using `~/.emonitor/instrum.ini`.  This file is also used
 to configure the recording of sensor data.
 
 The configuration file can be viewed using ``emonitor config``. ::

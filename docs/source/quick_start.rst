@@ -15,6 +15,13 @@ Set the serial port for `fake`,
    
    $ emonitor set fake --key port --value COM7
 
+And specify which sensors to read,
+
+::
+
+    emonitor set fake --key sensors --value A B C
+
+
 Then run ``emonitor`` for this device,
 
 ::
