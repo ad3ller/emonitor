@@ -15,7 +15,8 @@ import sqlite3
 import pymysql
 from cryptography.fernet import Fernet
 from humanize import naturalsize
-from .core import TABLE, DATA_DIRE, INSTRUM_FILE, KEY_FILE, FakeSerialInstrument, SerialInstrument
+from .core import TABLE, DATA_DIRE, INSTRUM_FILE, KEY_FILE
+from .devices import FakeSerialInstrument, SerialInstrument
 from .tools import db_init, db_check, db_insert, db_count, db_describe
 
 # config
