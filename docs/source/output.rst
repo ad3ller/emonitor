@@ -25,15 +25,14 @@ Each device can be associated with its own database, e.g.,
 
     $ emonitor set fake --key db --value fake_2018
 
-will set the name of the database for the device `fake` to `fake_2018.db`. 
-
-``emonitor generate [instrum]`` automatically creates an SQLite database for a serial device, with a table called `data` and columns 
-that match the device's sensors.
+An SQLite database can be automatically created for a serial device.
 
 ::
 
     $ emonitor generate fake
     Creating fake_2018.db with columns ['A', 'B', 'C', 'D']
+
+The database contains a table called `data` with columns that match the device's sensors.
 
 Alternatively, set the column names of the database explicitly,
 
@@ -49,11 +48,14 @@ Enable SQLite output with ``emonitor run`` using the ``--output`` flag.
 SQL
 +++
 
-Sensor readings can be transmitted to an SQL server using `pymysql <https://pymysql.readthedocs.io>`_.  This 
-might be appropriate for recording many GBs of data, or to make live sensor readings available over a network.
+Sensor readings can be transmitted by ``emonitor`` to an SQL server (facilitated by `pymysql <https://pymysql.readthedocs.io>`_).
+Tested with MySQL and MariaDB servers.
 
-Assuming that you have a MySQL (or MariaDB or sim.) server installed and running, create a database and a user with INSERT privileges.
- 
+An SQL server is considerably more complicated to configure, maintain and secure than an SQLite database.
+It is only recommended for very large databases or to make live sensor readings available over a network.
+
+Connect to your SQL server and create a database and a user with INSERT privileges:
+
 ::
 
     mysql> CREATE DATABASE emonitor;
@@ -66,7 +68,7 @@ Assuming that you have a MySQL (or MariaDB or sim.) server installed and running
 
 .. NOTE::
    
-   Similarly, grant SELECT privileges to any users that require remote access to the sensor data.
+   Also, grant SELECT privileges to any users that require remote access to the sensor data.
 
 Now create tables for recording sensor data.  For example,
 
@@ -88,9 +90,3 @@ Now create tables for recording sensor data.  For example,
 Use ``emonitor set`` to assign the `sql_*` settings listed `here <configure.html#output-settings>`_.
 
 And enable SQL output with ``emonitor run [instrum] --sql``.
-
-.. WARNING::
-
-    There are many security risks associated with remote SQL servers.  
-    Make regular backups, use strong and unique passwords, minimise privileges, and ensure
-    that your server and firewall are configured correctly.

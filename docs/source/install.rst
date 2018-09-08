@@ -1,6 +1,8 @@
 Install
 -------
 
+Requires python 3.6+.
+
 Clone the latest version of ``emonitor`` from `github.com <https://github.com/ad3ller/emonitor>`_,
 
 ::
@@ -37,29 +39,29 @@ Sub-commands can be used to configure communication with serial devices and data
 
     commands:
     
-    config
-    ------
-    list (ls)           list devices
-    config              display [device] configuration
-    new                 add device
-    copy (cp)           copy device configuration
-    remove (rm)         remove device
-    set                 set a device attribute
-    drop                drop a device attribute
-    
-    SQLite
-    ------
-    show                show SQLite databases
-    describe            describe an SQLite database
-    generate            automatically create SQLite databases
-                        for the configured devices
-    create              create SQLite database
-    destroy             destroy SQLite database
+        config
+        ------
+        list (ls)           list devices
+        config              display [device] configuration
+        new                 add device
+        copy (cp)           copy device configuration
+        remove (rm)         remove device
+        set                 set a device attribute
+        drop                drop a device attribute
+        
+        SQLite
+        ------
+        show                show SQLite databases
+        describe            describe an SQLite database
+        generate            automatically create SQLite databases
+                            for the configured devices
+        create              create SQLite database
+        destroy             destroy SQLite database
 
-    SQL
-    ---
-    passwd              store password for an SQL server
+        SQL
+        ---
+        passwd              store password for an SQL server
 
-    emonitor
-    --------
-    run                 start emonitor
+        emonitor
+        --------
+        run                 start emonitor
