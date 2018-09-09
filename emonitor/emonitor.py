@@ -275,9 +275,11 @@ def run(args, config):
             assert 'sql_db' in settings, "sql_db not specified."
             assert 'sql_table' in settings, "sql_table not specified."
             if 'sql_user' not in settings:
-                settings['sql_user'] = input('SQL user:')
+                settings['sql_user'] = input('SQL username: ')
+            else:
+                print(f"SQL username: {settings['sql_user']}")
             if 'sql_passwd' not in settings:
-                prompt = f"{settings['sql_user']}@{settings['sql_host']} enter password:"
+                prompt = f"Enter password: "
                 sql_passwd = getpass.getpass(prompt=prompt, stream=sys.stderr)
             else:
                 # decrypt password
@@ -464,7 +466,7 @@ def main():
     parser_create = subparsers.add_parser('create')
     parser_create.set_defaults(func=create_db)
     parser_create.add_argument('db', type=str, help='database name')
-    parser_create.add_argument('columns', nargs='+', help="table column(s)")
+    parser_create.add_argument('-c', '--columns', nargs='+', required=True, help="table column(s)")
     parser_create.add_argument('-q', '--quiet', action="store_true", default=False,
                                help="no printed output")
     parser_create.add_argument('--overwrite', action="store_true", default=False,

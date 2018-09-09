@@ -34,11 +34,11 @@ An SQLite database can be automatically created for a serial device.
 
 The database contains a table called `data` with columns that match the device's sensors.
 
-Alternatively, set the column names of the database explicitly,
+Alternatively, create the database explicitly,
 
 ::
 
-    $ emonitor create fake_2018 A B C D E --overwrite
+    $ emonitor create fake_2018 --columns A B C D E --overwrite
     Creating fake_2018.db with columns ['A', 'B', 'C', 'D', 'E']
 
 The SQLite files are stored in `~/.emonitor/data`.
@@ -48,11 +48,13 @@ Enable SQLite output with ``emonitor run`` using the ``--output`` flag.
 SQL
 +++
 
-Sensor readings can be transmitted by ``emonitor`` to an SQL server (facilitated by `pymysql <https://pymysql.readthedocs.io>`_).
-Tested with MySQL and MariaDB servers.
+Sensor readings can be transmitted by ``emonitor`` to an SQL server (facilitated by `pymysql <https://pymysql.readthedocs.io>`_ and 
+tested with MySQL and MariaDB servers).
 
-An SQL server is considerably more complicated to configure, maintain and secure than an SQLite database.
-It is only recommended for very large databases or to make live sensor readings available over a network.
+.. WARNING::
+    
+    An SQL server is considerably more complicated to configure, maintain and secure than an SQLite database.
+    It is only recommended for very large databases or to make live sensor readings available over a network.
 
 Connect to your SQL server and create a database and a user with INSERT privileges:
 
@@ -87,6 +89,19 @@ Now create tables for recording sensor data.  For example,
     mysql> quit;
     Bye
 
-Use ``emonitor set`` to assign the `sql_*` settings listed `here <configure.html#output-settings>`_.
+Use ``emonitor set`` to assign the `sql_host`, `sql_port`, `sql_db` and `sql_table` settings.  With the exception of
+`sql_table`, these can probably go in the DEFAULT section of the `config file <configure.html#output-settings>`_.
 
-And enable SQL output with ``emonitor run [instrum] --sql``.
+Enable SQL output with the ``--sql`` flag.
+
+::
+   
+   $ emonitor run fake --sql
+   SQL username: adam
+   Enter password:
+
+.. WARNING::
+
+    Do not store `sql_passwd` in the config file in plain text.  If necessary, use ``emonitor passwd``
+    to save it with basic encryption.  However, be aware that anyone with access to `instrum.ini` and
+    the generated `private.key`  file will be able to decrypt the password.
