@@ -10,9 +10,5 @@ These docs are hosted on `emonitor.readthedocs.io <https://emonitor.readthedocs.
 The source files can be built using `sphinx <https://www.sphinx-doc.org>`_, which requires `sphinx_rtd_theme <https://sphinx-rtd-theme.readthedocs.io>`_.
 
 ::
-
-    pip install sphinx_rtd_theme
-
-::
    
    make html
