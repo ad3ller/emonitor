@@ -17,7 +17,7 @@ import pymysql
 from cryptography.fernet import Fernet
 from humanize import naturalsize
 from .core import TABLE, DATA_DIRE, INSTRUM_FILE, KEY_FILE
-from .devices import FakeSerialInstrument, SerialInstrument
+from .devices import devices
 from .tools import db_init, db_check, db_insert, db_count, db_describe
 
 # config
@@ -194,7 +194,7 @@ def create_db(args, config):
         else:
             raise Exception("Database already exists.  Use --overwrite.")
     if not args.quiet:
-        print(f"Creating {db_name} with columns {args.columns}")
+        print(f"Creating {db_name} with columns {tuple(args.columns)}")
     db = sqlite3.connect(fil)
     db_init(db, TABLE, args.columns)
     db.close()
@@ -253,11 +253,14 @@ def run(args, config):
     if debug and tty:
         print("DEBUG enabled")
     try:
+        # simulate
+        if args.instrum in ["simulate", "fake"] and "device_class" not in settings:
+            settings["device_class"] = "fake"
         # serial connection
-        if args.instrum in ['simulate', 'fake']:
-            instrum = FakeSerialInstrument(settings)
+        if "device_class" in settings:
+            instrum = devices[settings["device_class"]](settings)
         else:
-            instrum = SerialInstrument(settings)
+            instrum = devices["generic"](settings)
         # check output
         if args.output:
             if 'db' not in settings:

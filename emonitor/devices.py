@@ -15,8 +15,8 @@ LF = "\x0A"
 ENQ = "\x05"
 ACK = "\x06"
 
-class FakeSerialInstrument(object):
-    """ simulate comms. with a serial instrument"""
+class Fake(object):
+    """ simulate comms. with a serial device"""
     def __init__(self, settings):
         self.config = settings
         self.sensors = [sen.strip() for sen in settings['sensors'].split(',')]
@@ -32,8 +32,8 @@ class FakeSerialInstrument(object):
         """ close connection"""
         pass
 
-class SerialInstrument(object):
-    """ serial communication with an instrument"""
+class Generic(object):
+    """ communication with a generic serial device"""
     def __init__(self, settings):
         self.settings = settings
         self.setup()
@@ -132,3 +132,5 @@ class SerialInstrument(object):
         """ close connection"""
         if self.connection.is_open:
             self.connection.close()
+
+devices = {"generic": Generic, "fake": Fake}
