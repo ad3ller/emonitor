@@ -7,7 +7,7 @@ emonitor docs
 
 These docs are hosted on `emonitor.readthedocs.io <https://emonitor.readthedocs.io>`_.
 
-The source files can be built using `sphinx <https://www.sphinx-doc.org>`_, which requires `sphinx_rtd_theme <https://sphinx-rtd-theme.readthedocs.io>`_.
+The source files can be built using `sphinx <https://www.sphinx-doc.org>`_ and the `sphinx_rtd_theme <https://sphinx-rtd-theme.readthedocs.io>`_.
 
 ::
    
