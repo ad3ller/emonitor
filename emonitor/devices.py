@@ -132,5 +132,3 @@ class Generic(object):
         """ close connection"""
         if self.connection.is_open:
             self.connection.close()
-
-devices = {"generic": Generic, "fake": Fake}

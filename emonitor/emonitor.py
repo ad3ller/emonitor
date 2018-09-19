@@ -14,11 +14,12 @@ import argparse
 import getpass
 import sqlite3
 import pymysql
+from importlib import import_module
 from cryptography.fernet import Fernet
 from humanize import naturalsize
 from .core import TABLE, DATA_DIRE, INSTRUM_FILE, KEY_FILE
-from .devices import devices
 from .tools import db_init, db_check, db_insert, db_count, db_describe
+devices = import_module("..devices", __name__)
 
 # config
 
@@ -254,13 +255,13 @@ def run(args, config):
         print("DEBUG enabled")
     try:
         # simulate
-        if args.instrum in ["simulate", "fake"] and "device_class" not in settings:
-            settings["device_class"] = "fake"
+        if "device_class" not in settings:
+            if args.instrum in ["simulate", "fake"]:
+                settings["device_class"] = "Fake"
+            else:
+                settings["device_class"] = "Generic"
         # serial connection
-        if "device_class" in settings:
-            instrum = devices[settings["device_class"]](settings)
-        else:
-            instrum = devices["generic"](settings)
+        instrum = getattr(devices, settings["device_class"])(settings)
         # check output
         if args.output:
             if 'db' not in settings:
