@@ -6,6 +6,7 @@ Created on Mon Jan  1 21:38:13 2018
 """
 import codecs
 import re
+from ast import literal_eval
 from random import gauss
 import serial
 
@@ -69,16 +70,8 @@ class Generic(object):
                     'write_timeout',
                     'inter_byte_timeout']:
             if att in self.settings:
-                # check if int
-                try:
-                    val = int(self.settings[att])
-                except ValueError:
-                    # check if float
-                    try:
-                        val = float(self.settings[att])
-                    except ValueError:
-                        val = self.settings[att]
                 # update serial configuration
+                val = literal_eval(self.settings[att])
                 setattr(self.connection, att, val)
 
     def read_all(self, debug=False, close=True):
