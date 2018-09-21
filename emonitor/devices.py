@@ -71,7 +71,10 @@ class Generic(object):
                     'inter_byte_timeout']:
             if att in self.settings:
                 # update serial configuration
-                val = literal_eval(self.settings[att])
+                try:
+                    val = literal_eval(self.settings[att])
+                except:
+                    val = self.settings[att]
                 setattr(self.connection, att, val)
 
     def read_all(self, debug=False, close=True):
