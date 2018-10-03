@@ -5,6 +5,7 @@ Created on Sun Jan 14 21:55:57 2018
 @author: adam
 """
 import os
+import warnings
 import sqlite3
 import datetime
 import pandas as pd
@@ -80,8 +81,126 @@ def db_insert(conn, table, columns, values, debug=False):
     cursor.execute(sql)
     conn.commit()
 
-def tquery(conn, start=None, end=None, **kwargs):
+def history(conn, start, end, **kwargs):
     """ SELECT * FROM table WHERE tcol BETWEEN start AND end.
+
+        If start and end are more than 24 hours apart, then a random
+        sample of length specified by 'limit' is returned, unless
+        'full_resolution' is set to True.
+
+        args:
+            conn          database connection           object
+            start         query start time              datetime.datetime / tuple / dict
+            end           query end time                datetime.datetime / tuple / dict
+
+        kwargs:
+            table='data'             name of table in database        str
+            limit=6000               max number of rows               int
+            tcol='TIMESTAMP'         timestamp column name            str
+            full_resolution=False    No limit - return everything     bool
+            coerce_float=True        convert, e.g., decimal to float  bool
+            dropna=True              drop NULL columns                bool
+            debug=False              print SQL query                  bool
+        return:
+            result       pandas.DataFrame
+    """
+    # read kwargs
+    table = kwargs.get('table', 'data')
+    limit = kwargs.get('limit', 6000)
+    tcol = kwargs.get('tcol', 'TIMESTAMP')
+    full_resolution = kwargs.get('full_resolution', False)
+    coerce_float = kwargs.get('coerce_float', True)
+    dropna = kwargs.get('dropna', True)
+    debug = kwargs.get('debug', False)
+    # start
+    if isinstance(start, datetime.datetime):
+        pass
+    elif isinstance(start, tuple):
+        start = datetime.datetime(*start)
+    elif isinstance(start, dict):
+        start = datetime.datetime(**start)
+    else:
+        raise TypeError("type(start) must be in [datetime.dateime, tuple, dict].")
+    # end
+    if isinstance(end, datetime.datetime):
+        pass
+    elif isinstance(end, tuple):
+        end = datetime.datetime(*end)
+    elif isinstance(start, dict):
+        end = datetime.datetime(**end)
+    else:
+        raise TypeError("type(end) must be in [datetime.dateime, tuple, dict].")
+    # check times
+    if end < start:
+        raise CausalityError('end before start')
+    # connection type
+    if isinstance(conn, sqlite3.Connection):
+        rand = "RANDOM()"
+    else:
+        rand = "RAND()"
+    # SQL query
+    if full_resolution or limit is None:
+        reorder = False
+        sql = f"SELECT * FROM `{table}` WHERE `{tcol}` BETWEEN '{start}' AND '{end}';"
+    # check start and end are on the same day
+    elif end - datetime.timedelta(days=1) < start:
+        reorder = False
+        sql = f"SELECT * FROM `{table}` WHERE `{tcol}` BETWEEN '{start}' AND '{end}' LIMIT {limit};"
+    else:
+        # if time span is more than 1 day randomly sample measurements from range
+        reorder = True
+        sql = f"SELECT * FROM `{table}` WHERE `{tcol}` BETWEEN '{start}' AND '{end}' ORDER BY {rand} LIMIT {limit};"
+    if debug:
+        print(sql)
+    result = pd.read_sql_query(sql, conn, coerce_float=coerce_float, parse_dates=[tcol])
+    if dropna:
+        # remove empty columns
+        result = result.dropna(axis=1, how='all')
+    if reorder:
+        # sort data by timestamp
+        result = result.sort_values(by=tcol)
+    result = result.set_index(tcol)
+    return result
+
+def live(conn, delta={"hours" : 4}, **kwargs):
+    """ SELECT * FROM table WHERE tcol BETWEEN (time.now() - delta) AND time.now().
+
+        If delta is more than 24 hours then a random sample of length specified 
+        by 'limit' is returned, unless 'full_resolution' is set to True.
+
+        args:
+            conn          database connection           object
+            delta         query start time              datetime.timedelta / dict
+
+        kwargs:
+            table='data'             name of table in database        str
+            limit=6000               max number of rows               int
+            tcol='TIMESTAMP'         timestamp column name            str
+            full_resolution=False    No limit - return everything     bool
+            coerce_float=True        convert, e.g., decimal to float  bool
+            dropna=True              drop NULL columns                bool
+            debug=False              print SQL query                  bool
+        return:
+            result       pandas.DataFrame
+
+    """
+    if isinstance(delta, datetime.timedelta):
+        pass
+    elif isinstance(delta, dict):
+        delta = datetime.timedelta(**delta)
+    else:
+        raise TypeError("type(delta) must be in [datetime.timedelta, dict].")
+    end = datetime.datetime.now()
+    start = end - delta
+    return history(conn, start, end, **kwargs)
+
+def tquery(conn, start=None, end=None, **kwargs):
+    """ ------------------------------------------------------------
+        DeprecationWarning
+            Use history() or live() instead.
+        ------------------------------------------------------------
+    
+        SELECT * FROM table WHERE tcol BETWEEN start AND end.
 
         If start is None, it will be set to time.now() - delta [default:
         4 hours], i.e., live mode.
@@ -111,44 +230,11 @@ def tquery(conn, start=None, end=None, **kwargs):
         return:
             result       pandas.DataFrame
     """
+    warnings.warn("tquery() is deprecated. Use history() or live() instead.", DeprecationWarning)
     # read kwargs
     delta = kwargs.get('delta', datetime.timedelta(hours=4))
-    table = kwargs.get('table', 'data')
-    limit = kwargs.get('limit', 6000)
-    tcol = kwargs.get('tcol', 'TIMESTAMP')
-    full_resolution = kwargs.get('full_resolution', False)
-    coerce_float = kwargs.get('coerce_float', True)
-    dropna = kwargs.get('dropna', True)
-    debug = kwargs.get('debug', False)
-    # connection type
-    if isinstance(conn, sqlite3.Connection):
-        rand = "RANDOM()"
-    else:
-        rand = "RAND()"
-    # check times
     start, end = get_trange(start, end, delta)
-    # SQL query
-    if full_resolution or limit is None:
-        reorder = False
-        sql = f"SELECT * FROM `{table}` WHERE `{tcol}` BETWEEN '{start}' AND '{end}';"
-    # check start and end are on the same day
-    elif end - datetime.timedelta(days=1) < start:
-        reorder = False
-        sql = f"SELECT * FROM `{table}` WHERE `{tcol}` BETWEEN '{start}' AND '{end}' LIMIT {limit};"
-    else:
-        # if time span is more than 1 day randomly sample measurements from range
-        reorder = True
-        sql = f"SELECT * FROM `{table}` WHERE `{tcol}` BETWEEN '{start}' AND '{end}' ORDER BY {rand} LIMIT {limit};"
-    if debug:
-        print(sql)
-    result = pd.read_sql_query(sql, conn, coerce_float=coerce_float, parse_dates=[tcol])
-    if dropna:
-        # remove empty columns
-        result = result.dropna(axis=1, how='all')
-    if reorder:
-        # sort data by timestamp
-        result = result.sort_values(by=tcol)
-    result = result.set_index(tcol)
+    result = history(conn, start, end, **kwargs)
     return result
 
 def get_trange(start, end, delta):
@@ -163,7 +249,7 @@ def get_trange(start, end, delta):
         if not isinstance(start, datetime.datetime):
             # start not specified, check end
             if not isinstance(end, datetime.datetime):
-                # niether start nor end specified -> live mode
+                # neither start nor end specified -> live mode
                 end = datetime.datetime.now()
             # infer start from end and delta
             start = end - delta

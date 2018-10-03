@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 from datetime import datetime
 from emonitor.core import TABLE, DATA_DIRE
-from emonitor.tools import db_path, db_init, db_check, db_describe, db_insert, tquery
+from emonitor.tools import db_path, db_init, db_check, db_describe, db_insert, tquery, history
 
 # constants
 COLUMNS = ('A', 'B', 'C')
@@ -46,7 +46,13 @@ def test_tquery():
     vals = np.array([row[1:] for row in DATA])
     assert np.array_equal(df.values, vals)
 
+def test_history():
+    start = datetime(2015, 12, 9, 9, 8, 13)
+    end = datetime(2018, 12, 11, 9, 8, 13)
+    df = history(CONN, start, end)
+    vals = np.array([row[1:] for row in DATA])
+    assert np.array_equal(df.values, vals)
+
 def test_clean():
     CONN.close()
     os.remove(DB)
-
