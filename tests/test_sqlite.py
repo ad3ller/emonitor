@@ -10,7 +10,8 @@ import numpy as np
 import pandas as pd
 from datetime import datetime
 from emonitor.core import TABLE, DATA_DIRE
-from emonitor.tools import db_path, db_init, db_check, db_describe, db_insert, tquery, history
+from emonitor.tools import db_path, db_init, db_check, db_describe, db_insert, tquery
+from emonitor import history
 
 # constants
 COLUMNS = ('A', 'B', 'C')
