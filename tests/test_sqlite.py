@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 from datetime import datetime
 from emonitor.core import TABLE, DATA_DIRE
-from emonitor.tools import db_path, db_init, db_check, db_describe, db_insert, tquery
+from emonitor.tools import db_path, db_init, db_check, db_describe, db_insert
 from emonitor import history
 
 # constants
@@ -32,20 +32,16 @@ def test_new_db():
     db_check(CONN, TABLE, COLUMNS)
 
 def test_desc():
-    DESC = "[(0, 'TIMESTAMP', 'timestamp', 1, 'CURRENT_TIMESTAMP', 0), (1, 'A', 'DOUBLE', 0, 'NULL', 0), (2, 'B', 'DOUBLE', 0, 'NULL', 0), (3, 'C', 'DOUBLE', 0, 'NULL', 0)]"
+    DESC = ("[(0, 'TIMESTAMP', 'timestamp', 1, 'CURRENT_TIMESTAMP', 0),"
+            " (1, 'A', 'DOUBLE', 0, 'NULL', 0),"
+            " (2, 'B', 'DOUBLE', 0, 'NULL', 0),"
+            " (3, 'C', 'DOUBLE', 0, 'NULL', 0)]")
     assert str(db_describe(CONN, TABLE)) == DESC
 
 def test_insert():
     cols = (TCOL,) + COLUMNS
     for d in DATA:
         db_insert(CONN, TABLE, cols, d)
-
-def test_tquery():
-    start = datetime(2015, 12, 9, 9, 8, 13)
-    end = datetime(2018, 12, 11, 9, 8, 13)
-    df = tquery(CONN, start, end)
-    vals = np.array([row[1:] for row in DATA])
-    assert np.array_equal(df.values, vals)
 
 def test_history():
     start = datetime(2015, 12, 9, 9, 8, 13)
