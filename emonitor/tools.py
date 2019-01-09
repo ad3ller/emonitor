@@ -153,13 +153,14 @@ def history(conn, start, end, **kwargs):
     if debug:
         print(sql)
     result = pd.read_sql_query(sql, conn, coerce_float=coerce_float, parse_dates=[tcol])
-    if dropna:
-        # remove empty columns
-        result = result.dropna(axis=1, how='all')
-    if reorder:
-        # sort data by timestamp
-        result = result.sort_values(by=tcol)
-    result = result.set_index(tcol)
+    if len(result.index) > 0:
+        if dropna:
+            # remove empty columns
+            result = result.dropna(axis=1, how='all')
+        if reorder:
+            # sort data by timestamp
+            result = result.sort_values(by=tcol)
+        result = result.set_index(tcol)
     return result
 
 def live(conn, delta={"hours" : 4}, **kwargs):
