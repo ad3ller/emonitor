@@ -20,9 +20,9 @@ The configuration file can be viewed using ``emonitor config``. ::
 
     [maxigauge]
     db = pressure
-    cmd = PR<sensor><CR><LF>
-    ack = <ACK><CR><LF>
-    enq = <ENQ>
+    cmd = PR{sensor}$CR$LF
+    ack = $ACK$CR$LF
+    enq = $ENQ
     port = COM7
     baudrate = 9600
     stopbits = 1
@@ -31,12 +31,12 @@ The configuration file can be viewed using ``emonitor config``. ::
     timeout = 1
     regex = ,(.*)
     sensors = 1, 2, 3, 6
-    column_fmt = <sensor>
+    column_fmt = {sensor}
 
     [lakeshore336]
     db = temperature
     sensors = A, B, C
-    cmd = KRDG?<sensor>\r\n
+    cmd = KRDG?{sensor}\r\n
     parity = O
     stopbits = 1
     bytesize = 7
@@ -79,7 +79,7 @@ dsrdtr              enable hardware (DSR/DTR) flow control
 write_timeout       write timeout value
 inter_byte_timeout  inter-character timeout
 
-cmd                 query instrument command with <sensor> placeholder
+cmd                 query instrument command with {sensor} placeholder
 enq                 request data transmission             
 ack                 positive report signal
 sensors             comma-delimited list of sensor names
