@@ -14,7 +14,7 @@ The configuration file can be viewed using ``emonitor config``. ::
 
     [fake]
     db = fake_2018
-    sensors = A, B, C
+    sensors = ['A', 'B', 'C']
     sql_table = fake
     port = COM7
 
@@ -30,12 +30,12 @@ The configuration file can be viewed using ``emonitor config``. ::
     parity = N
     timeout = 1
     regex = ,(.*)
-    sensors = 1, 2, 3, 6
+    sensors = ['1', '2', '3', '6']
     column_fmt = {sensor}
 
     [lakeshore336]
     db = temperature
-    sensors = A, B, C
+    sensors = ['A', 'B', 'C']
     cmd = KRDG?{sensor}\r\n
     parity = O
     stopbits = 1
