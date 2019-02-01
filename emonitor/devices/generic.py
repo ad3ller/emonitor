@@ -70,6 +70,6 @@ class Generic(Serial, Device):
                     response = match.group(1)
                 data.append(response)
             return tuple(data)
-        except (SerialException, AssertionError) as error:
+        except (SerialException, AttributeError, AssertionError) as error:
             warnings.warn(error)
             return None
