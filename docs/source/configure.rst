@@ -14,15 +14,15 @@ The configuration file can be viewed using ``emonitor config``. ::
 
     [fake]
     db = fake_2018
-    sensors = A, B, C
+    sensors = ['A', 'B', 'C']
     sql_table = fake
     port = COM7
 
     [maxigauge]
     db = pressure
-    cmd = PR<sensor><CR><LF>
-    ack = <ACK><CR><LF>
-    enq = <ENQ>
+    cmd = PR{sensor}$CR$LF
+    ack = $ACK$CR$LF
+    enq = $ENQ
     port = COM7
     baudrate = 9600
     stopbits = 1
@@ -30,13 +30,13 @@ The configuration file can be viewed using ``emonitor config``. ::
     parity = N
     timeout = 1
     regex = ,(.*)
-    sensors = 1, 2, 3, 6
-    column_fmt = <sensor>
+    sensors = ['1', '2', '3', '6']
+    column_fmt = {sensor}
 
     [lakeshore336]
     db = temperature
-    sensors = A, B, C
-    cmd = KRDG?<sensor>\r\n
+    sensors = ['A', 'B', 'C']
+    cmd = KRDG?{sensor}\r\n
     parity = O
     stopbits = 1
     bytesize = 7
@@ -79,7 +79,7 @@ dsrdtr              enable hardware (DSR/DTR) flow control
 write_timeout       write timeout value
 inter_byte_timeout  inter-character timeout
 
-cmd                 query instrument command with <sensor> placeholder
+cmd                 query instrument command with {sensor} placeholder
 enq                 request data transmission             
 ack                 positive report signal
 sensors             comma-delimited list of sensor names

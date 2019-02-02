@@ -8,6 +8,8 @@ import os
 import warnings
 import sqlite3
 import datetime
+from collections.abc import Iterable
+from ast import literal_eval
 import pandas as pd
 from .core import DATA_DIRE
 
@@ -15,6 +17,7 @@ class CausalityError(ValueError):
     """ `There was an accident with a contraceptive and a time machine.`
     """
     pass
+
 
 def db_path(name):
     """ Get path of sqlite file for 'name'.
@@ -34,6 +37,7 @@ def db_init(conn, table, columns, debug=False):
     cursor.execute(sql)
     cursor.close()
 
+
 def db_check(conn, table, columns, debug=False):
     """ check sqlite database
     """
@@ -48,6 +52,7 @@ def db_check(conn, table, columns, debug=False):
             raise Exception(f"column `{col}` not in sqlite database")
     cursor.close()
 
+
 def db_count(conn, table, debug=False):
     """ count rows in sqlite table
     """
@@ -58,6 +63,7 @@ def db_count(conn, table, debug=False):
     num_rows = cursor.execute(sql).fetchone()
     cursor.close()
     return num_rows
+
 
 def db_describe(conn, table, debug=False):
     """ get sqlite database structure
@@ -70,6 +76,7 @@ def db_describe(conn, table, debug=False):
     cursor.close()
     return info
 
+
 def db_insert(conn, table, columns, values, debug=False):
     """ INSERT INTO {table} {columns} VALUES {values};
     """
@@ -80,6 +87,7 @@ def db_insert(conn, table, columns, values, debug=False):
     cursor = conn.cursor()
     cursor.execute(sql)
     conn.commit()
+
 
 def history(conn, start, end, **kwargs):
     """ SELECT * FROM table WHERE tcol BETWEEN start AND end.
@@ -153,19 +161,21 @@ def history(conn, start, end, **kwargs):
     if debug:
         print(sql)
     result = pd.read_sql_query(sql, conn, coerce_float=coerce_float, parse_dates=[tcol])
-    if dropna:
-        # remove empty columns
-        result = result.dropna(axis=1, how='all')
-    if reorder:
-        # sort data by timestamp
-        result = result.sort_values(by=tcol)
-    result = result.set_index(tcol)
+    if len(result.index) > 0:
+        if dropna:
+            # remove empty columns
+            result = result.dropna(axis=1, how='all')
+        if reorder:
+            # sort data by timestamp
+            result = result.sort_values(by=tcol)
+        result = result.set_index(tcol)
     return result
 
-def live(conn, delta={"hours" : 4}, **kwargs):
+
+def live(conn, delta=None, **kwargs):
     """ SELECT * FROM table WHERE tcol BETWEEN (time.now() - delta) AND time.now().
 
-        If delta is more than 24 hours then a random sample of length specified 
+        If delta is more than 24 hours then a random sample of length specified
         by 'limit' is returned, unless 'full_resolution' is set to True.
 
         args:
@@ -184,6 +194,8 @@ def live(conn, delta={"hours" : 4}, **kwargs):
             result       pandas.DataFrame
 
     """
+    if delta is None:
+        delta = {"hours" : 4}
     if isinstance(delta, datetime.timedelta):
         pass
     elif isinstance(delta, dict):
@@ -194,12 +206,13 @@ def live(conn, delta={"hours" : 4}, **kwargs):
     start = end - delta
     return history(conn, start, end, **kwargs)
 
+
 def tquery(conn, start=None, end=None, **kwargs):
     """ ------------------------------------------------------------
         DeprecationWarning
             Use history() or live() instead.
         ------------------------------------------------------------
-    
+
         SELECT * FROM table WHERE tcol BETWEEN start AND end.
 
         If start is None, it will be set to time.now() - delta [default:
@@ -237,8 +250,9 @@ def tquery(conn, start=None, end=None, **kwargs):
     result = history(conn, start, end, **kwargs)
     return result
 
+
 def get_trange(start, end, delta):
-    """ Find start and end times from inputs.
+    """ find start and end times from inputs
     """
     if not isinstance(start, datetime.datetime) or not isinstance(end, datetime.datetime):
         # start or end unspecified -> delta required
@@ -260,3 +274,42 @@ def get_trange(start, end, delta):
     if end < start:
         raise CausalityError('end before start')
     return start, end
+
+
+def format_commands(settings):
+    """ format string commands
+    """
+    for key in ['cmd', 'ack', 'enq']:
+        if key in settings:
+            value = settings[key]
+            if isinstance(value, str):
+                # string replacements
+                for placeholder, replacement in [("$CR", "\x0D"),
+                                                 ("$LF", "\x0A"),
+                                                 ("$ACK", "\x06"),
+                                                 ("$ENQ", "\x05")]:
+                    if placeholder in value:
+                        value = value.replace(placeholder, replacement)
+                settings[key] = value
+    return settings
+
+
+def parse_settings(conf, instrum, ignore=None):
+    """ read config section and use ast.literal_eval() to get python dtypes
+    """
+    settings = dict()
+    # keys to ignore
+    if ignore is None:
+        ignore = []
+    if not isinstance(ignore, Iterable):
+        ignore = [ignore]
+    # evaluate items
+    for key, value in conf.items(instrum):
+        if key in ignore:
+            settings[key] = value
+        else:
+            try:
+                settings[key] = literal_eval(value)
+            except:
+                settings[key] = value
+    return format_commands(settings)
