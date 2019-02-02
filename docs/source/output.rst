@@ -14,6 +14,27 @@ The simplest way to store sensor readings is to redirect them to a file.
 
     Use ``--no_header`` if appending data to an existing file with ``>>``.
 
+Text data can be read using, e.g., notepad, excel.  
+
+To read the file using `pandas <https://pandas.pydata.org/>`_,
+
+::
+
+    >>> import os
+    >>> import pandas as pd
+    >>> fil = os.path.join("~/", "fake.dat")
+    >>> tcol = "TIMESTAMP"
+    >>> df = pd.read_csv(fil, parse_dates=[tcol]).set_index(tcol)
+    >>> df.head()
+                                A         B         C         D
+    TIMESTAMP                                                  
+    2019-01-01 22:19:43  293.2937  293.6519  293.9759  294.4213
+    2019-01-01 22:19:48  292.8743  293.5636  293.8714  294.4905
+    2019-01-01 22:19:53  293.1201  293.5686  294.1647  294.4085
+    2019-01-01 22:19:58  292.9944  293.6096  294.0472  294.6245
+    2019-01-01 22:20:03  293.0680  293.6496  294.0408  294.5890
+
+
 SQLite
 ++++++
 
