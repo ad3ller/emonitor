@@ -11,12 +11,14 @@ import pandas as pd
 from datetime import datetime
 from emonitor.core import TABLE, DATA_DIRE
 from emonitor.tools import db_path, db_init, db_check, db_describe, db_insert
+from emonitor.data import EmonitorData
 from emonitor import history
 
 # constants
 COLUMNS = ('A', 'B', 'C')
 TCOL = 'TIMESTAMP'
-DB = db_path('__pytest__.db')
+NAME = '__pytest__.db'
+DB = db_path(NAME)
 if os.path.exists(DB):
     os.remove(DB)
 CONN = sqlite3.connect(DB)
@@ -53,3 +55,14 @@ def test_history():
 def test_clean():
     CONN.close()
     os.remove(DB)
+
+def test_emonitordata():
+    name = NAME
+    data = EmonitorData(DATA_DIRE)
+    data.create(name, columns=[1, 2, 3], quiet=True)
+    fils = data.show()
+    assert isinstance(fils, list)
+    assert name in fils
+    data.destroy(name, force=True)
+    fils = data.show()
+    assert name not in fils

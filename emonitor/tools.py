@@ -10,6 +10,7 @@ import sqlite3
 import datetime
 from collections.abc import Iterable
 from ast import literal_eval
+import numpy as np
 import pandas as pd
 from .core import DATA_DIRE
 
@@ -49,7 +50,9 @@ def db_check(conn, table, columns, debug=False):
     db_columns = list(next(zip(*cursor.description)))
     for col in columns:
         if col not in db_columns:
-            raise Exception(f"column `{col}` not in sqlite database")
+            cursor.close()
+            conn.close()
+            raise NameError(f"columnn `{col}` not in sqlite database")
     cursor.close()
 
 
@@ -60,7 +63,7 @@ def db_count(conn, table, debug=False):
     if debug:
         print(sql)
     cursor = conn.cursor()
-    num_rows = cursor.execute(sql).fetchone()
+    num_rows = cursor.execute(sql).fetchone()[0]
     cursor.close()
     return num_rows
 
@@ -106,7 +109,7 @@ def history(conn, start, end, **kwargs):
             limit=6000               max number of rows               int
             tcol='TIMESTAMP'         timestamp column name            str
             full_resolution=False    No limit - return everything     bool
-            coerce_float=True        convert, e.g., decimal to float  bool
+            coerce_float=False       convert, e.g., decimal to float  bool
             dropna=True              drop NULL columns                bool
             debug=False              print SQL query                  bool
         return:
@@ -117,7 +120,7 @@ def history(conn, start, end, **kwargs):
     limit = kwargs.get('limit', 6000)
     tcol = kwargs.get('tcol', 'TIMESTAMP')
     full_resolution = kwargs.get('full_resolution', False)
-    coerce_float = kwargs.get('coerce_float', True)
+    coerce_float = kwargs.get('coerce_float', False)
     dropna = kwargs.get('dropna', True)
     debug = kwargs.get('debug', False)
     # start
@@ -162,6 +165,7 @@ def history(conn, start, end, **kwargs):
         print(sql)
     result = pd.read_sql_query(sql, conn, coerce_float=coerce_float, parse_dates=[tcol])
     if len(result.index) > 0:
+        result.replace("NULL", np.nan, inplace=True)
         if dropna:
             # remove empty columns
             result = result.dropna(axis=1, how='all')
