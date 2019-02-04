@@ -21,6 +21,10 @@ class Generic(Serial, Device):
         self.sensors = settings.get("sensors", None)
         self.cmd = codecs.decode(self.settings["cmd"], "unicode-escape")
         self.regex = settings.get("regex", None)
+        if "null_values" in self.settings:
+            self.null_values = self.settings["null_values"]
+        else:
+            self.null_values = None
         # initialise Serial class
         self.debug = debug
         if self.debug:
@@ -83,6 +87,9 @@ class Generic(Serial, Device):
                 if self.regex is not None:
                     match = re.search(self.regex, response)
                     response = match.group(1)
+                # check if result is a known null value
+                if self.null_values is not None and response in self.null_values:
+                    response = None
                 yield response
             except:
                 yield None

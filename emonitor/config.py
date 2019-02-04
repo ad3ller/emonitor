@@ -75,7 +75,9 @@ class EmonitorConfig(ConfigParser):
         if write:
             self.write()
 
-    def set(self, instrum, option, value, encryption=None, force=False, write=True):
+    def set(self, instrum, option, value,
+            encryption=None, force=False, write=True,
+            list_options=["null_values"]):
         """ set attribute value(s) [with optional encryption] """
         # checks
         if not (instrum == "DEFAULT" or self.has_section(instrum)):
@@ -92,7 +94,7 @@ class EmonitorConfig(ConfigParser):
             else:
                 value = getpass(prompt=prompt, stream=sys.stderr)
         # squeeze
-        if isinstance(value, Iterable) and len(value) == 1:
+        if isinstance(value, Iterable) and len(value) == 1 and option not in list_options:
             value = value[0]
         # encrypt value
         if encryption is not None:
