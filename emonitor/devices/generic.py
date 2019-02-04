@@ -27,28 +27,17 @@ class Generic(Serial, Device):
             print("serial settings:", self.serial_settings)
         super().__init__(**self.serial_settings)
 
-    def check_reset(self, reset_wait=60):
+    def check_reset(self):
         """ check / reset connection """
-        interupt = None
-        while True:
-            try:
-                self.flush()
-                break
-            except:
-                warnings.warn("Serial connection failed")
-                try:
-                    # attempt to reconnect
-                    if self.is_open:
-                        self.close()
-                    time.sleep(reset_wait)
-                    self.open()
-                except KeyboardInterrupt as error:
-                    interupt = error
-                    break
-                except:
-                    continue
-        if interupt is not None:
-            raise interupt
+        try:
+            self.flush()
+        except:
+            warnings.warn("Serial connection failed")
+            # attempt to reset
+            if self.is_open:
+                self.close()
+            self.open()
+            self.flush()
 
     def read_data(self, sensors=None):
         """ read sensor data """
@@ -57,7 +46,11 @@ class Generic(Serial, Device):
             sensors = self.sensors
         if self.debug:
             print("sensors:", sensors)
-        self.check_reset()
+        try:
+            self.check_reset()
+        except:
+            # failed to open serial connection
+            return
         # query instrument
         for sen in sensors:
             try:

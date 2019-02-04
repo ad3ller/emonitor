@@ -125,28 +125,30 @@ def run(config, instrum, wait,
         # start server
         while True:
             ## read data
-            values = tuple(device.read_data())
-            is_null = all([v is None for v in values])
-            ## output
-            if not is_null:
-                values = (time.strftime("%Y-%m-%d %H:%M:%S"), ) + values
-                if tty:
-                    if not quiet:
-                        val_str = tuple(str(v).replace("None", "NULL".rjust(str_width)) for v in values)
-                        print("\t ".join(val_str))
-                else:
-                    val_str = tuple(str(v).replace("None", "NULL") for v in values)
-                    print(",".join(val_str))
-                if output:
-                    db_insert(db, TABLE, columns, values, debug=debug)
-                if sql:
-                    try:
-                        if not sql_conn.open:
-                            # attempt to reconnect
-                            sql_conn.connect()
-                        sql_insert(sql_conn, settings["sql_table"], columns, values, debug=debug)
-                    except:
-                        warnings.warn("SQL connection failed")
+            data = device.read_data()
+            if data is not None:
+                values = tuple(data)
+                is_null = all([v is None for v in values])
+                ## output
+                if not is_null:
+                    values = (time.strftime("%Y-%m-%d %H:%M:%S"), ) + values
+                    if tty:
+                        if not quiet:
+                            val_str = tuple(str(v).replace("None", "NULL".rjust(str_width)) for v in values)
+                            print("\t ".join(val_str))
+                    else:
+                        val_str = tuple(str(v).replace("None", "NULL") for v in values)
+                        print(",".join(val_str))
+                    if output:
+                        db_insert(db, TABLE, columns, values, debug=debug)
+                    if sql:
+                        try:
+                            if not sql_conn.open:
+                                # attempt to reconnect
+                                sql_conn.connect()
+                            sql_insert(sql_conn, settings["sql_table"], columns, values, debug=debug)
+                        except:
+                            warnings.warn("SQL connection failed")
             time.sleep(wait)
     except KeyboardInterrupt:
         if tty and not quiet:
