@@ -11,7 +11,7 @@ class Device(ABC):
     """ emonitor device base class
     """
     @abstractmethod
-    def read_data(self, sensors=None, debug=False):
+    def read_data(self, sensors=None):
         pass
 
     @abstractmethod

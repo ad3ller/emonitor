@@ -14,6 +14,7 @@ import numpy as np
 import pandas as pd
 from .core import DATA_DIRE
 
+
 class CausalityError(ValueError):
     """ `There was an accident with a contraceptive and a time machine.`
     """
