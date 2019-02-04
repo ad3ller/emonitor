@@ -46,7 +46,7 @@ class Generic(Serial, Device):
                     interupt = error
                     break
                 except:
-                    pass
+                    continue
         if interupt is not None:
             raise interupt
 
