@@ -26,7 +26,7 @@ class Fake(Device):
                 value = gauss(293 + 0.5*i, 0.1)
                 yield f"{value:.4f}"
             except:
-                yield "NULL"
+                yield None
 
     def close(self):
         pass

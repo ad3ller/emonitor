@@ -75,4 +75,4 @@ class Generic(Serial, Device):
                     response = match.group(1)
                 yield response
             except:
-                yield "NULL"
+                yield None

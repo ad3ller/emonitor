@@ -18,6 +18,7 @@ from .core import (TABLE,
                    KEY_FILE)
 from .tools import (db_check,
                     db_insert,
+                    sql_insert,
                     parse_settings)
 
 
@@ -88,6 +89,7 @@ def get_sql(settings):
                                database=settings["sql_db"])
     return sql_conn
 
+
 def run(config, instrum, wait,
         output=False, sql=False, header=True, quiet=False, debug=False):
     """ start the emonitor server and output to sqlite database.
@@ -124,15 +126,17 @@ def run(config, instrum, wait,
         while True:
             ## read data
             values = tuple(device.read_data())
-            is_null = all([isinstance(v, str) and v.upper() == "NULL" for v in values])
+            is_null = all([v is None for v in values])
             ## output
             if not is_null:
                 values = (time.strftime("%Y-%m-%d %H:%M:%S"), ) + values
                 if tty:
                     if not quiet:
-                        print("\t ".join(values))
+                        val_str = tuple(str(v).replace("None", "NULL".rjust(str_width)) for v in values)
+                        print("\t ".join(val_str))
                 else:
-                    print(",".join(values))
+                    val_str = tuple(str(v).replace("None", "NULL") for v in values)
+                    print(",".join(val_str))
                 if output:
                     db_insert(db, TABLE, columns, values, debug=debug)
                 if sql:
@@ -140,7 +144,7 @@ def run(config, instrum, wait,
                         if not sql_conn.open:
                             # attempt to reconnect
                             sql_conn.connect()
-                        db_insert(sql_conn, settings["sql_table"], columns, values, debug=debug)
+                        sql_insert(sql_conn, settings["sql_table"], columns, values, debug=debug)
                     except:
                         warnings.warn("SQL connection failed")
             time.sleep(wait)

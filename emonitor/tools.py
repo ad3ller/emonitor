@@ -83,12 +83,26 @@ def db_describe(conn, table, debug=False):
 def db_insert(conn, table, columns, values, debug=False):
     """ INSERT INTO {table} {columns} VALUES {values};
     """
-    col_str = str(columns).replace("'", "`")
-    sql = f"INSERT INTO {table} {col_str} VALUES {values};"
+    col_str = str(tuple(columns)).replace("'", "`")
+    val_str = ", ".join(tuple('?' for c in columns))
+    sql = f"INSERT INTO {table} {col_str} VALUES ({val_str});"
     if debug:
         print(sql)
     cursor = conn.cursor()
-    cursor.execute(sql)
+    cursor.execute(sql, values)
+    conn.commit()
+
+
+def sql_insert(conn, table, columns, values, debug=False):
+    """ INSERT INTO {table} {columns} VALUES {values};
+    """
+    col_str = str(tuple(columns)).replace("'", "`")
+    val_str = ", ".join(tuple(r'%s' for c in columns))
+    sql = f"INSERT INTO {table} {col_str} VALUES ({val_str});"
+    if debug:
+        print(sql)
+    cursor = conn.cursor()
+    cursor.execute(sql, values)
     conn.commit()
 
 
