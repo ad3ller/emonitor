@@ -77,7 +77,7 @@ class EmonitorConfig(ConfigParser):
 
     def set(self, instrum, option, value,
             encryption=None, force=False, write=True,
-            list_options=["null_values"]):
+            list_options=["sensors", "null_values"]):
         """ set attribute value(s) [with optional encryption] """
         # checks
         if not (instrum == "DEFAULT" or self.has_section(instrum)):

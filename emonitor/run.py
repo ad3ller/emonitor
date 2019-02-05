@@ -22,15 +22,15 @@ from .tools import (db_check,
                     parse_settings)
 
 
-def get_columns(settings):
+def get_columns(settings, tcol="TIMESTAMP"):
     """ get columns from sensor names """
     sensors = settings["sensors"]
     if "column_fmt" in settings:
         column_fmt = settings["column_fmt"]
-        columns = ("TIMESTAMP",) \
+        columns = (tcol,) \
                   + tuple([column_fmt.replace("{sensor}", str(sen).strip()) for sen in sensors])
     else:
-        columns = ("TIMESTAMP",) \
+        columns = (tcol,) \
                   + tuple([str(sen).strip() for sen in sensors])
     return columns
 
@@ -96,7 +96,8 @@ def run(config, instrum, wait,
     """
     tty = sys.stdout.isatty()
     settings = parse_settings(config, instrum)
-    columns = get_columns(settings)
+    tcol = settings.get("tcol", "TIMESTAMP")
+    columns = get_columns(settings, tcol)
     if debug and tty:
         print("DEBUG enabled")
     try:

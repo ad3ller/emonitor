@@ -56,6 +56,12 @@ Similarly, ``emonitor set [instrum]`` can be used to assign settings for specifi
 
     $ emonitor set lakeshore336 --key port --value COM8
 
+Or to set multiple values,
+
+::
+
+    $ emonitor set lakeshore336 --key sensors --value A B C
+
 Each serial device has a section in the config file.  New sections can be added using the sub-commands ``new`` 
 or ``copy`` (see ``--help`` for options).
 
@@ -64,9 +70,9 @@ serial settings
 
 It should be possible to configure ``emonitor`` to communicate with most serial devices using the settings listed below.  
 
-==================  ==================================================   
+==================  =====================================================  
 key                 description   
-==================  ==================================================
+==================  =====================================================
 port                device name, e.g., COM1
 baudrate            data rate
 bytesize            number of data bits
@@ -79,12 +85,12 @@ dsrdtr              enable hardware (DSR/DTR) flow control
 write_timeout       write timeout value
 inter_byte_timeout  inter-character timeout
 
-cmd                 query instrument command with {sensor} placeholder
+cmd                 query instrument command with `{sensor}` placeholder
 enq                 request data transmission             
 ack                 positive report signal
 sensors             comma-delimited list of sensor names
 regex               regular expression to format instrument response
-==================  ==================================================
+==================  =====================================================
 
 .. TIP::
    
@@ -96,10 +102,11 @@ output settings
 
 The items below are used to configure emonitor's output. See `here <output.html>`_ for further details.
 
-==========  =======================================
+==========  ===============================================
 key         description   
-==========  =======================================
+==========  ===============================================
 db          name of SQLite database
+tcol        name of timestamp column (default: "TIMESTAMP")
 column_fmt  format column names, e.g., PG\_<sensor>
 sql_host    SQL server ip address
 sql_port    SQL server port number
@@ -107,4 +114,4 @@ sql_user    username with INSERT privileges
 sql_passwd  password (encrypted)
 sql_db      name of SQL database
 sql_table   name of SQL table
-==========  =======================================
+==========  ===============================================
