@@ -7,12 +7,12 @@ Created on Sat Dec 23 13:43:09 2017
 import sys
 import os
 import time
-import warnings
+import logging
 import getpass
 import sqlite3
 from importlib import import_module
-import pymysql
 from cryptography.fernet import Fernet
+import pymysql
 from .core import (TABLE,
                    DATA_DIRE,
                    KEY_FILE)
@@ -20,6 +20,7 @@ from .tools import (db_check,
                     db_insert,
                     sql_insert,
                     parse_settings)
+logger = logging.getLogger(__name__)
 
 
 def get_columns(settings, tcol="TIMESTAMP"):
@@ -34,7 +35,8 @@ def get_columns(settings, tcol="TIMESTAMP"):
                   + tuple([str(sen).strip() for sen in sensors])
     return columns
 
-def get_device(settings, instrum, debug=False):
+
+def get_device(settings, instrum):
     """ get instance of device_class """
     if "device_class" in settings:
         device_class = settings["device_class"]
@@ -46,7 +48,9 @@ def get_device(settings, instrum, debug=False):
     # serial connection
     mod, obj = device_class.split(".")
     module = import_module("..devices." + mod, __name__)
-    return getattr(module, obj)(settings, debug=debug)
+    device = getattr(module, obj)(settings)
+    return device
+
 
 def get_sqlite(settings, columns):
     """ get sqlite connection """
@@ -58,8 +62,10 @@ def get_sqlite(settings, columns):
     if not os.path.isfile(fil):
         raise OSError(f"{fname} does not exists.  Use generate or create.")
     db = sqlite3.connect(fil)
+    logger.info(f"connected to SQLite database: fname={fname}")
     db_check(db, TABLE, columns)
     return db
+
 
 def get_sql(settings):
     """ get connection to sql database """
@@ -87,21 +93,23 @@ def get_sql(settings):
                                user=settings["sql_user"],
                                password=sql_passwd,
                                database=settings["sql_db"])
+    logger.info(f"connected to SQL server: host={settings['sql_host']}, database={settings['sql_db']}")
     return sql_conn
 
 
 def run(config, instrum, wait,
-        output=False, sql=False, header=True, quiet=False, debug=False):
+        output=False, sql=False, header=True, quiet=False):
     """ start the emonitor server and output to sqlite database.
     """
+    logger.info(f"start: instrum={instrum}, wait={wait}, output={output}, sql={sql}")
     tty = sys.stdout.isatty()
     settings = parse_settings(config, instrum)
+    logger.debug(f"{instrum} settings: {settings}")
     tcol = settings.get("tcol", "TIMESTAMP")
     columns = get_columns(settings, tcol)
-    if debug and tty:
-        print("DEBUG enabled")
+    logger.debug(f"{instrum} columns: {columns}")
     try:
-        device = get_device(settings, instrum, debug=debug)
+        device = get_device(settings, instrum)
         # sqlite output
         db = None
         if output:
@@ -115,14 +123,12 @@ def run(config, instrum, wait,
             if not quiet:
                 print("Starting emonitor. Use Ctrl-C to stop. \n")
                 if header:
-                    test = tuple(device.read_data())
-                    if debug:
-                        print(test)
-                    str_width = len(str(test[0]))
-                    print(columns[0].rjust(19) + " \t",
-                          "\t ".join([col.rjust(str_width) for col in columns[1:]]))
+                    str_width = 16
+                    print(columns[0].rjust(19) +
+                          "".join([c.rjust(str_width) for c in columns[1:]]))
         elif header:
             print(",".join(columns))
+        num_sql_errors = 0
         # start server
         while True:
             ## read data
@@ -135,26 +141,35 @@ def run(config, instrum, wait,
                     values = (time.strftime("%Y-%m-%d %H:%M:%S"), ) + values
                     if tty:
                         if not quiet:
-                            val_str = tuple(str(v).replace("None", "NULL".rjust(str_width)) for v in values)
-                            print("\t ".join(val_str))
+                            val_str = tuple(str(v).replace("None", "NULL").rjust(str_width) for v in values)
+                            print("".join(val_str))
                     else:
                         val_str = tuple(str(v).replace("None", "NULL") for v in values)
                         print(",".join(val_str))
                     if output:
-                        db_insert(db, TABLE, columns, values, debug=debug)
+                        db_insert(db, TABLE, columns, values)
                     if sql:
                         try:
                             if not sql_conn.open:
                                 # attempt to reconnect
                                 sql_conn.connect()
-                            sql_insert(sql_conn, settings["sql_table"], columns, values, debug=debug)
+                            sql_insert(sql_conn, settings["sql_table"], columns, values)
+                            num_sql_errors = 0
                         except:
-                            warnings.warn("SQL connection failed")
+                            num_sql_errors += 1
+                            if num_sql_errors == 1:
+                                # log first failure
+                                logger.warning("Failed to connect to SQL server", exc_info=True)
             time.sleep(wait)
     except KeyboardInterrupt:
-        if tty and not quiet:
-            print("\nStopping emonitor.")
+        pass
+    except Exception as error:
+        logger.exception("Exception occurred")
+        raise error
     finally:
+        logger.info(f"stop")
+        if tty and not quiet:
+            print("\nStopping emonitor")
         device.close()
         if db is not None:
             db.close()

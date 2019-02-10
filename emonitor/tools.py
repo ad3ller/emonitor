@@ -5,6 +5,7 @@ Created on Sun Jan 14 21:55:57 2018
 @author: adam
 """
 import os
+import logging
 import warnings
 import sqlite3
 import datetime
@@ -13,6 +14,7 @@ from ast import literal_eval
 import numpy as np
 import pandas as pd
 from .core import DATA_DIRE
+logger = logging.getLogger(__name__)
 
 
 class CausalityError(ValueError):
@@ -28,27 +30,26 @@ def db_path(name):
     return fil
 
 
-def db_init(conn, table, columns, debug=False):
+def db_init(conn, table, columns):
     """ initialize sqlite database
     """
     column_str = ", ".join(['`' + str(c) + '` DOUBLE DEFAULT NULL' for c in columns])
     sql = f"CREATE TABLE {table}(`TIMESTAMP` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, {column_str});"
-    if debug:
-        print(sql)
+    logger.debug(f"db_init() sql: {sql}")
     cursor = conn.cursor()
     cursor.execute(sql)
     cursor.close()
 
 
-def db_check(conn, table, columns, debug=False):
+def db_check(conn, table, columns):
     """ check sqlite database
     """
     sql = f"SELECT * FROM {table};"
-    if debug:
-        print(sql)
+    logger.debug(f"db_check() sql: {sql}")
     cursor = conn.cursor()
     cursor.execute(sql)
     db_columns = list(next(zip(*cursor.description)))
+    logger.debug(f"db_check() columns: {db_columns}")
     for col in columns:
         if col not in db_columns:
             cursor.close()
@@ -57,51 +58,50 @@ def db_check(conn, table, columns, debug=False):
     cursor.close()
 
 
-def db_count(conn, table, debug=False):
+def db_count(conn, table):
     """ count rows in sqlite table
     """
     sql = f"SELECT COUNT(*) as count FROM {table};"
-    if debug:
-        print(sql)
+    logger.debug(f"db_count() sql: {sql}")
     cursor = conn.cursor()
-    num_rows = cursor.execute(sql).fetchone()[0]
+    response = cursor.execute(sql).fetchone()
+    logger.debug(f"db_count() response: {response}")
+    num_rows = response[0]
     cursor.close()
     return num_rows
 
 
-def db_describe(conn, table, debug=False):
+def db_describe(conn, table):
     """ get sqlite database structure
     """
     sql = f"PRAGMA table_info({table});"
-    if debug:
-        print(sql)
+    logger.debug(f"db_describe() sql: {sql}")
     cursor = conn.cursor()
     info = cursor.execute(sql).fetchall()
+    logger.debug(f"db_describe() info: {info}")
     cursor.close()
     return info
 
 
-def db_insert(conn, table, columns, values, debug=False):
+def db_insert(conn, table, columns, values):
     """ INSERT INTO {table} {columns} VALUES {values};
     """
     col_str = str(tuple(columns)).replace("'", "`")
     val_str = ", ".join(tuple('?' for c in columns))
     sql = f"INSERT INTO {table} {col_str} VALUES ({val_str});"
-    if debug:
-        print(sql)
+    logger.debug(f"db_insert() sql: {sql}")
     cursor = conn.cursor()
     cursor.execute(sql, values)
     conn.commit()
 
 
-def sql_insert(conn, table, columns, values, debug=False):
+def sql_insert(conn, table, columns, values):
     """ INSERT INTO {table} {columns} VALUES {values};
     """
     col_str = str(tuple(columns)).replace("'", "`")
     val_str = ", ".join(tuple(r'%s' for c in columns))
     sql = f"INSERT INTO {table} {col_str} VALUES ({val_str});"
-    if debug:
-        print(sql)
+    logger.debug(f"sql_insert() sql: {sql}")
     cursor = conn.cursor()
     cursor.execute(sql, values)
     conn.commit()
@@ -126,7 +126,6 @@ def history(conn, start, end, **kwargs):
             full_resolution=False    No limit - return everything     bool
             coerce_float=False       convert, e.g., decimal to float  bool
             dropna=True              drop NULL columns                bool
-            debug=False              print SQL query                  bool
         return:
             result       pandas.DataFrame
     """
@@ -137,7 +136,6 @@ def history(conn, start, end, **kwargs):
     full_resolution = kwargs.get('full_resolution', False)
     coerce_float = kwargs.get('coerce_float', False)
     dropna = kwargs.get('dropna', True)
-    debug = kwargs.get('debug', False)
     # start
     if isinstance(start, datetime.datetime):
         pass
@@ -176,8 +174,7 @@ def history(conn, start, end, **kwargs):
         # if time span is more than 1 day randomly sample measurements from range
         reorder = True
         sql = f"SELECT * FROM `{table}` WHERE `{tcol}` BETWEEN '{start}' AND '{end}' ORDER BY {rand} LIMIT {limit};"
-    if debug:
-        print(sql)
+    logger.debug(f"history() sql: {sql}")
     result = pd.read_sql_query(sql, conn, coerce_float=coerce_float, parse_dates=[tcol])
     if len(result.index) > 0:
         result.replace("NULL", np.nan, inplace=True)
@@ -208,7 +205,6 @@ def live(conn, delta=None, **kwargs):
             full_resolution=False    No limit - return everything     bool
             coerce_float=True        convert, e.g., decimal to float  bool
             dropna=True              drop NULL columns                bool
-            debug=False              print SQL query                  bool
         return:
             result       pandas.DataFrame
 
@@ -258,7 +254,6 @@ def tquery(conn, start=None, end=None, **kwargs):
             full_resolution=False    No limit - return everything     bool
             coerce_float=True        convert, e.g., decimal to float  bool
             dropna=True              drop NULL columns                bool
-            debug=False              print SQL query                  bool
         return:
             result       pandas.DataFrame
     """

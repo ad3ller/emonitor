@@ -5,9 +5,12 @@ Created on Sat Dec 23 13:43:09 2017
 @author: Adam
 """
 import sys
+import logging
 from getpass import getpass
 from collections.abc import Iterable
 from configparser import ConfigParser
+logger = logging.getLogger(__name__)
+
 
 class EmonitorConfig(ConfigParser):
     """ view and edit instrum.ini file """
@@ -41,6 +44,7 @@ class EmonitorConfig(ConfigParser):
         # update
         self.add_section(instrum)
         if write:
+            logger.info(f"new(): instrum={instrum}")
             self.write()
 
     def copy(self, existing, new, force=False, write=True):
@@ -57,6 +61,7 @@ class EmonitorConfig(ConfigParser):
         for option, value in self.items(existing):
             super().set(new, option, value=value)
         if write:
+            logger.info(f"copy(): existing={existing}, new={new}")
             self.write()
 
     def remove(self, instrum, force=False, write=True):
@@ -73,13 +78,14 @@ class EmonitorConfig(ConfigParser):
             # abort
             return
         if write:
+            logger.info(f"remove(): instrum={instrum}")
             self.write()
 
     def set(self, instrum, option, value,
-            encryption=None, force=False, write=True,
-            list_options=["sensors", "null_values"]):
+            encryption=None, force=False, write=True, **kwargs):
         """ set attribute value(s) [with optional encryption] """
         # checks
+        list_options = kwargs.get("list_options", ["sensors", "null_values"])
         if not (instrum == "DEFAULT" or self.has_section(instrum)):
             raise NameError(f"{instrum} not found in config file")
         if encryption is None and not force and option in ["sql_passwd"]:
@@ -103,6 +109,7 @@ class EmonitorConfig(ConfigParser):
         # set
         super().set(instrum, option, value=str(value))
         if write:
+            logger.info(f"set(): instrum={instrum}, option={option}, value={value}")
             self.write()
 
     def drop(self, instrum, option, write=True):
@@ -115,6 +122,7 @@ class EmonitorConfig(ConfigParser):
         else:
             raise NameError(f"{instrum} not found in config file")
         if write:
+            logger.info(f"drop(): instrum={instrum}, option={option}")
             self.write()
 
     def write(self, fil=None):

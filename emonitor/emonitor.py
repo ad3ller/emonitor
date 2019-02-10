@@ -5,8 +5,9 @@ Created on Sat Dec 23 13:43:09 2017
 @author: Adam
 """
 import argparse
+import logging
 from pprint import pprint
-from .core import INSTRUM_FILE, KEY_FILE, DATA_DIRE
+from .core import INSTRUM_FILE, LOG_FILE, KEY_FILE, DATA_DIRE
 from .encryption import fernet_key
 from .data import EmonitorData
 from .config import EmonitorConfig
@@ -179,9 +180,20 @@ def main():
     user_args = parser.parse_args()
     args = dict(vars(user_args))
     args.pop("command")
-    args.pop("func")
+    func = args.pop("func")
+    debug = args.pop("debug", False)
+
+    # logging
+    if debug:
+        logging.basicConfig(level=logging.DEBUG,
+                            format="%(name)s %(message)s")
+    else:
+        logging.basicConfig(filename=LOG_FILE,
+                            level=logging.INFO,
+                            format="%(asctime)s [%(levelname)s] %(name)s - %(message)s")
+
     # execute
-    response = user_args.func(**args)
+    response = func(**args)
     if response is not None:
         pprint(response)
 

@@ -6,12 +6,15 @@ Created on Sat Dec 23 13:43:09 2017
 """
 import os
 import glob
+import logging
 import sqlite3
 from ast import literal_eval
 from collections.abc import Iterable
 from humanize import naturalsize
 from .core import TABLE
 from .tools import db_init, db_count, db_describe
+logger = logging.getLogger(__name__)
+
 
 class EmonitorData(object):
     """ emonitor sqlite data directory """
@@ -63,6 +66,7 @@ class EmonitorData(object):
                 raise OSError("File already exists.  Use --overwrite.")
         if not quiet:
             print(f"Creating {fname} with columns : {columns}")
+        logger.info(f"create(): fname={fname}, columns={columns}")
         with sqlite3.connect(fil) as db:
             db_init(db, TABLE, columns)
 
@@ -102,6 +106,7 @@ class EmonitorData(object):
             if not os.path.exists(fil):
                 if not quiet:
                     print(f"Creating {fname} with columns {columns}")
+                logger.info(f"generate(): fname={fname}, columns={columns}")
                 with sqlite3.connect(fil) as db:
                     db_init(db, TABLE, columns)
 
@@ -114,6 +119,7 @@ class EmonitorData(object):
         if os.path.isfile(fil):
             prompt = f"Are you sure you want to permanently destroy {fname} (y/n) ?"
             if force or input(prompt).lower() in ["y", "yes"]:
+                logger.info(f"destroy(): fil={fil}")
                 os.remove(fil)
         else:
             raise OSError(f"{fname} not found")

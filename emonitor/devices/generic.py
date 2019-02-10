@@ -6,16 +6,16 @@ Created on Mon Jan  1 21:38:13 2018
 """
 import codecs
 import re
-import time
-import warnings
+import logging
 from serial import SerialException, Serial
 from .tools import get_serial_settings
 from .base import Device
+logger = logging.getLogger(__name__)
 
 
 class Generic(Serial, Device):
     """ communication with a serial device """
-    def __init__(self, settings, debug=False):
+    def __init__(self, settings):
         self.settings = settings
         self.serial_settings = get_serial_settings(settings)
         self.sensors = settings.get("sensors", None)
@@ -25,18 +25,20 @@ class Generic(Serial, Device):
             self.null_values = self.settings["null_values"]
         else:
             self.null_values = None
+        self.num_serial_errors = 0
         # initialise Serial class
-        self.debug = debug
-        if self.debug:
-            print("serial settings:", self.serial_settings)
         super().__init__(**self.serial_settings)
 
     def check_reset(self):
         """ check / reset connection """
         try:
             self.flush()
+            self.num_serial_errors = 0
         except:
-            warnings.warn("Serial connection failed")
+            self.num_serial_errors += 1
+            if self.num_serial_errors == 1:
+                # log first failure
+                logger.warning("Failed to connect to serial device", exc_info=True)
             # attempt to reset
             if self.is_open:
                 self.close()
@@ -48,8 +50,7 @@ class Generic(Serial, Device):
         # check connection and flush buffer
         if sensors is None:
             sensors = self.sensors
-        if self.debug:
-            print("sensors:", sensors)
+        logger.debug(f"read_data() sensors: {sensors}")
         try:
             self.check_reset()
         except:
@@ -62,8 +63,7 @@ class Generic(Serial, Device):
                 # parse command
                 serial_cmd = self.cmd.replace("{sensor}", sen)
                 serial_cmd = bytes(serial_cmd, "utf8")
-                if self.debug:
-                    print("serial cmd:", serial_cmd)
+                logger.debug(f"read_data() sensor {sen} query: {serial_cmd}")
                 # write command, read response
                 self.write(serial_cmd)
                 # wait for acknowledgement / send enquiry
@@ -71,17 +71,15 @@ class Generic(Serial, Device):
                     # needed for maxigauge
                     ack = codecs.decode(self.settings["ack"], "unicode-escape")
                     response = self.readline()
-                    if self.debug:
-                        print("acknowledgement:", response, bytes(ack, "utf8"))
+                    logger.debug(f"sensor {sen} acknowledgement: {response}")
                     if response == bytes(ack, "utf8"):
                         # send enquiry
                         enq = codecs.decode(self.settings["enq"], "unicode-escape")
                         self.write(bytes(enq, "utf8"))
                     else:
-                        raise SerialException("Acknowledgement failed")
+                        raise SerialException("acknowledgement failed")
                 response = self.readline()
-                if self.debug:
-                    print(response)
+                logger.debug(f"read_data() sensor {sen} response: {response}")
                 # format response
                 response = response.strip().decode("utf-8")
                 if self.regex is not None:
@@ -92,4 +90,5 @@ class Generic(Serial, Device):
                     response = None
                 yield response
             except:
+                logger.exception("Exception occurred")
                 yield None

@@ -16,7 +16,7 @@ if not os.path.isfile(USER_INSTRUM_FILE):
     shutil.copy(EXAMPLE_INTRUM_FILE, USER_INSTRUM_FILE)
 
 setup(name='emonitor',
-      version='0.1.7',
+      version='0.1.8',
       description='record sensor data',
       url='',
       author='Adam Deller',
