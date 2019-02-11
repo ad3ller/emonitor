@@ -4,10 +4,11 @@ Created on Sat Dec 23 13:43:09 2017
 
 @author: Adam
 """
+import os
 import argparse
 import logging
 from pprint import pprint
-from .core import INSTRUM_FILE, LOG_FILE, KEY_FILE, DATA_DIRE
+from .core import INSTRUM_FILE, LOG_DIRE, KEY_FILE, DATA_DIRE
 from .encryption import fernet_key
 from .data import EmonitorData
 from .config import EmonitorConfig
@@ -58,24 +59,24 @@ def main():
 
     # list instruments
     parser_ls = subparsers.add_parser("list", aliases=["ls"])
-    parser_ls.set_defaults(func=config.instruments)
+    parser_ls.set_defaults(func=config.instruments, log="config")
 
     # show config
     parser_show = subparsers.add_parser("config")
-    parser_show.set_defaults(func=config.show)
+    parser_show.set_defaults(func=config.show, log="config")
     parser_show.add_argument("instrum", type=str, nargs="?", default=None,
                              help="serial device name [if None then show all]")
 
     # new instrument
     parser_new = subparsers.add_parser("new")
-    parser_new.set_defaults(func=config.new)
+    parser_new.set_defaults(func=config.new, log="config")
     parser_new.add_argument("instrum", type=str, help="new device name")
     parser_new.add_argument("--force", action="store_true", default=False,
                             help="ignore warnings")
 
     # copy instrument
     parser_copy = subparsers.add_parser("copy", aliases=["cp"])
-    parser_copy.set_defaults(func=config.copy)
+    parser_copy.set_defaults(func=config.copy, log="config")
     parser_copy.add_argument("existing", type=str, help="existing device name")
     parser_copy.add_argument("new", type=str, help="new device name")
     parser_copy.add_argument("--force", action="store_true", default=False,
@@ -83,14 +84,14 @@ def main():
 
     # remove instrument
     parser_delete = subparsers.add_parser("remove", aliases=["rm"])
-    parser_delete.set_defaults(func=config.remove)
+    parser_delete.set_defaults(func=config.remove, log="config")
     parser_delete.add_argument("instrum", type=str, help="device name")
     parser_delete.add_argument("--force", action="store_true", default=False,
                                help="ignore warnings")
 
     # set attrib
     parser_set = subparsers.add_parser("set")
-    parser_set.set_defaults(func=config.set)
+    parser_set.set_defaults(func=config.set, log="config")
     parser_set.add_argument("instrum", type=str, nargs="?", default="DEFAULT",
                             help="device name [if None then DEFAULT]")
     parser_set.add_argument("-k", "--key", dest="option", required=True,
@@ -102,7 +103,7 @@ def main():
 
     # remove attrib
     parser_drop = subparsers.add_parser("drop")
-    parser_drop.set_defaults(func=config.drop)
+    parser_drop.set_defaults(func=config.drop, log="config")
     parser_drop.add_argument("instrum", type=str, nargs="?", default="DEFAULT",
                              help="device name [if None then DEFAULT]")
     parser_drop.add_argument("-k", "--key", dest="option", required=True,
@@ -110,7 +111,7 @@ def main():
 
     # set encrypted
     parser_passwd = subparsers.add_parser("passwd")
-    parser_passwd.set_defaults(func=config.set, value=None, encryption=fernet_key(KEY_FILE))
+    parser_passwd.set_defaults(func=config.set, log="config", value=None, encryption=fernet_key(KEY_FILE))
     parser_passwd.add_argument("instrum", type=str, default="DEFAULT",
                                help="device name [if None then DEFAULT]")
     parser_passwd.add_argument("-k", "--key", dest="option", default="sql_passwd",
@@ -118,18 +119,18 @@ def main():
 
     # list sqlite database tables
     parser_show = subparsers.add_parser("show")
-    parser_show.set_defaults(func=data.show)
+    parser_show.set_defaults(func=data.show, log="data")
 
     # describe sqlite3 database
     parser_describe = subparsers.add_parser("describe")
-    parser_describe.set_defaults(func=data.describe)
+    parser_describe.set_defaults(func=data.describe, log="data")
     parser_describe.add_argument("name", type=str, help="database name")
     parser_describe.add_argument("-s", "--schema", action="store_true", default=False,
                                  help="table structure")
 
     # create sqlite3 database
     parser_create = subparsers.add_parser("create")
-    parser_create.set_defaults(func=data.create)
+    parser_create.set_defaults(func=data.create, log="data")
     parser_create.add_argument("name", type=str, help="database name")
     parser_create.add_argument("-c", "--columns", nargs="+", required=True, help="table column(s)")
     parser_create.add_argument("-q", "--quiet", action="store_true", default=False,
@@ -139,7 +140,7 @@ def main():
 
     # auto-create sqlite3 database
     parser_generate = subparsers.add_parser("generate")
-    parser_generate.set_defaults(func=data.generate, config=config)
+    parser_generate.set_defaults(func=data.generate, config=config, log="data")
     parser_generate.add_argument("instruments", nargs="*",
                                  help="device name(s) [if None then all].")
     parser_generate.add_argument("-q", "--quiet", action="store_true", default=False,
@@ -151,14 +152,14 @@ def main():
 
     # destroy sqlite3 database
     parser_destroy = subparsers.add_parser("destroy")
-    parser_destroy.set_defaults(func=data.destroy)
+    parser_destroy.set_defaults(func=data.destroy, log="data")
     parser_destroy.add_argument("name", type=str, help="database name")
     parser_destroy.add_argument("--force", action="store_true", default=False,
                                 help="ignore warnings")
 
     # run server
     parser_run = subparsers.add_parser("run")
-    parser_run.set_defaults(func=run, config=config)
+    parser_run.set_defaults(func=run, config=config, log=None)
     parser_run.add_argument("instrum", type=str, help="serial device name")
     parser_run.add_argument("--debug", action="store_true", default=False,
                             help="enable debugging info")
@@ -181,6 +182,7 @@ def main():
     args = dict(vars(user_args))
     args.pop("command")
     func = args.pop("func")
+    log = args.pop("log")
     debug = args.pop("debug", False)
 
     # logging
@@ -188,7 +190,12 @@ def main():
         logging.basicConfig(level=logging.DEBUG,
                             format="%(name)s %(message)s")
     else:
-        logging.basicConfig(filename=LOG_FILE,
+        if log is None:
+            log = args["instrum"]
+        fname, _ = os.path.splitext(log)
+        fname += ".log"
+        fil = os.path.join(LOG_DIRE, fname)
+        logging.basicConfig(filename=fil,
                             level=logging.INFO,
                             format="%(asctime)s [%(levelname)s] %(name)s - %(message)s")
 

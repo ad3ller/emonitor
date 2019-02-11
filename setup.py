@@ -6,17 +6,20 @@ EXAMPLE_INTRUM_FILE = os.path.join(MOD_PATH, 'instrum.ini')
 USER_DIRE = os.path.join(os.path.expanduser("~"), '.emonitor')
 USER_INSTRUM_FILE = os.path.join(USER_DIRE, 'instrum.ini')
 DATA_DIRE = os.path.join(USER_DIRE, 'data')
+LOG_DIRE = os.path.join(USER_DIRE, 'logs')
 
 # create user instrum.ini
 if not os.path.isdir(USER_DIRE):
     os.makedirs(USER_DIRE)
 if not os.path.isdir(DATA_DIRE):
     os.makedirs(DATA_DIRE)
+if not os.path.isdir(LOG_DIRE):
+    os.makedirs(LOG_DIRE)
 if not os.path.isfile(USER_INSTRUM_FILE):
     shutil.copy(EXAMPLE_INTRUM_FILE, USER_INSTRUM_FILE)
 
 setup(name='emonitor',
-      version='0.1.8',
+      version='0.1.9',
       description='record sensor data',
       url='',
       author='Adam Deller',
