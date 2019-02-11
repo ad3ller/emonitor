@@ -101,6 +101,7 @@ class EmonitorData(object):
             if os.path.exists(fil) and overwrite:
                 prompt = f"Are you sure you want to permanently destroy {fname} (y/n) ?"
                 if force or input(prompt).lower() in ["y", "yes"]:
+                    logger.debug(f"generate(), remove: {fil}")
                     os.remove(fil)
             ## create
             if not os.path.exists(fil):

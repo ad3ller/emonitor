@@ -33,12 +33,14 @@ class Generic(Serial, Device):
         """ check / reset connection """
         try:
             self.flush()
-            self.num_serial_errors = 0
+            if self.num_serial_errors > 0:
+                logger.info("Reconnected to serial device")
+                self.num_serial_errors = 0
         except:
             self.num_serial_errors += 1
             if self.num_serial_errors == 1:
                 # log first failure
-                logger.warning("Failed to connect to serial device", exc_info=True)
+                logger.warning("Disconnected from serial device", exc_info=True)
             # attempt to reset
             if self.is_open:
                 self.close()
@@ -71,13 +73,13 @@ class Generic(Serial, Device):
                     # needed for maxigauge
                     ack = codecs.decode(self.settings["ack"], "unicode-escape")
                     response = self.readline()
-                    logger.debug(f"sensor {sen} acknowledgement: {response}")
+                    logger.debug(f"read_data() sensor {sen} acknowledgement: {response}")
                     if response == bytes(ack, "utf8"):
                         # send enquiry
                         enq = codecs.decode(self.settings["enq"], "unicode-escape")
                         self.write(bytes(enq, "utf8"))
                     else:
-                        raise SerialException("acknowledgement failed")
+                        raise SerialException("sensor {sen} acknowledgement failed")
                 response = self.readline()
                 logger.debug(f"read_data() sensor {sen} response: {response}")
                 # format response
@@ -85,6 +87,7 @@ class Generic(Serial, Device):
                 if self.regex is not None:
                     match = re.search(self.regex, response)
                     response = match.group(1)
+                    logger.debug(f"read_data() sensor {sen} regex `{self.regex}` match: {response}")
                 # check if result is a known null value
                 if self.null_values is not None and response in self.null_values:
                     response = None

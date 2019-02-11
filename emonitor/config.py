@@ -57,8 +57,10 @@ class EmonitorConfig(ConfigParser):
             else:
                 # abort
                 return
+        logger.debug(f"copy(): add section {new}")
         self.add_section(new)
         for option, value in self.items(existing):
+            logger.debug(f"copy(): instrum={new}, {option}={value}")
             super().set(new, option, value=value)
         if write:
             logger.info(f"copy(): existing={existing}, new={new}")
@@ -94,6 +96,7 @@ class EmonitorConfig(ConfigParser):
                 return
         # user input
         if value is None:
+            logger.debug(f"set(): get user input")
             prompt = f"enter value for {instrum}.{option} :"
             if encryption is None:
                 value = input(prompt)
@@ -101,10 +104,12 @@ class EmonitorConfig(ConfigParser):
                 value = getpass(prompt=prompt, stream=sys.stderr)
         # squeeze
         if isinstance(value, Iterable) and len(value) == 1 and option not in list_options:
+            logger.debug(f"set(): single value input")
             value = value[0]
         # encrypt value
         if encryption is not None:
             assert hasattr(encryption, "encrypt"), "encryption object must have method `encrpyt`"
+            logger.debug(f"set(): encrypt value")
             value = encryption.encrypt(bytes(value, "utf-8")).decode("utf8")
         # set
         super().set(instrum, option, value=str(value))

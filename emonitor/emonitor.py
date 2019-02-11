@@ -73,6 +73,8 @@ def main():
     parser_new.add_argument("instrum", type=str, help="new device name")
     parser_new.add_argument("--force", action="store_true", default=False,
                             help="ignore warnings")
+    parser_new.add_argument("--debug", action="store_true", default=False,
+                            help="enable debugging")
 
     # copy instrument
     parser_copy = subparsers.add_parser("copy", aliases=["cp"])
@@ -81,6 +83,8 @@ def main():
     parser_copy.add_argument("new", type=str, help="new device name")
     parser_copy.add_argument("--force", action="store_true", default=False,
                              help="ignore warnings")
+    parser_copy.add_argument("--debug", action="store_true", default=False,
+                             help="enable debugging")
 
     # remove instrument
     parser_delete = subparsers.add_parser("remove", aliases=["rm"])
@@ -88,6 +92,8 @@ def main():
     parser_delete.add_argument("instrum", type=str, help="device name")
     parser_delete.add_argument("--force", action="store_true", default=False,
                                help="ignore warnings")
+    parser_delete.add_argument("--debug", action="store_true", default=False,
+                               help="enable debugging")
 
     # set attrib
     parser_set = subparsers.add_parser("set")
@@ -100,6 +106,8 @@ def main():
                             help="attribute value, e.g., COM7")
     parser_set.add_argument("--force", action="store_true", default=False,
                             help="ignore warnings")
+    parser_set.add_argument("--debug", action="store_true", default=False,
+                            help="enable debugging")
 
     # remove attrib
     parser_drop = subparsers.add_parser("drop")
@@ -108,6 +116,8 @@ def main():
                              help="device name [if None then DEFAULT]")
     parser_drop.add_argument("-k", "--key", dest="option", required=True,
                              help="attribute key, e.g., port")
+    parser_drop.add_argument("--debug", action="store_true", default=False,
+                             help="enable debugging")
 
     # set encrypted
     parser_passwd = subparsers.add_parser("passwd")
@@ -116,10 +126,14 @@ def main():
                                help="device name [if None then DEFAULT]")
     parser_passwd.add_argument("-k", "--key", dest="option", default="sql_passwd",
                                help="attribute key, e.g., sql_passwd")
+    parser_passwd.add_argument("--debug", action="store_true", default=False,
+                               help="enable debugging")
 
     # list sqlite database tables
     parser_show = subparsers.add_parser("show")
     parser_show.set_defaults(func=data.show, log="data")
+    parser_show.add_argument("--debug", action="store_true", default=False,
+                             help="enable debugging")
 
     # describe sqlite3 database
     parser_describe = subparsers.add_parser("describe")
@@ -127,6 +141,8 @@ def main():
     parser_describe.add_argument("name", type=str, help="database name")
     parser_describe.add_argument("-s", "--schema", action="store_true", default=False,
                                  help="table structure")
+    parser_describe.add_argument("--debug", action="store_true", default=False,
+                                 help="enable debugging")
 
     # create sqlite3 database
     parser_create = subparsers.add_parser("create")
@@ -137,6 +153,8 @@ def main():
                                help="no printed output")
     parser_create.add_argument("--overwrite", action="store_true", default=False,
                                help="overwrite existing")
+    parser_create.add_argument("--debug", action="store_true", default=False,
+                               help="enable debugging")
 
     # auto-create sqlite3 database
     parser_generate = subparsers.add_parser("generate")
@@ -149,6 +167,8 @@ def main():
                                  help="overwrite existing")
     parser_generate.add_argument("--force", action="store_true", default=False,
                                  help="ignore warnings")
+    parser_generate.add_argument("--debug", action="store_true", default=False,
+                                 help="enable debugging")
 
     # destroy sqlite3 database
     parser_destroy = subparsers.add_parser("destroy")
@@ -156,13 +176,13 @@ def main():
     parser_destroy.add_argument("name", type=str, help="database name")
     parser_destroy.add_argument("--force", action="store_true", default=False,
                                 help="ignore warnings")
+    parser_destroy.add_argument("--debug", action="store_true", default=False,
+                                help="enable debugging")
 
     # run server
     parser_run = subparsers.add_parser("run")
     parser_run.set_defaults(func=run, config=config, log=None)
     parser_run.add_argument("instrum", type=str, help="serial device name")
-    parser_run.add_argument("--debug", action="store_true", default=False,
-                            help="enable debugging info")
     parser_run.add_argument("-o", "--output", action="store_true", default=False,
                             help="enable SQLite output")
     parser_run.add_argument("-s", "--sql", action="store_true", default=False,
@@ -176,6 +196,8 @@ def main():
     #                    help="live data plotting")
     parser_run.add_argument("-q", "--quiet", action="store_true", default=False,
                             help="no printed output")
+    parser_run.add_argument("--debug", action="store_true", default=False,
+                            help="enable debugging")
 
     # format user input
     user_args = parser.parse_args()
