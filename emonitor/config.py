@@ -87,7 +87,8 @@ class EmonitorConfig(ConfigParser):
             encryption=None, force=False, write=True, **kwargs):
         """ set attribute value(s) [with optional encryption] """
         # checks
-        list_options = kwargs.get("list_options", ["sensors", "null_values"])
+        list_options = kwargs.get("list_options",
+                                  ["sensors", "null_values", "columns"])
         if not (instrum == "DEFAULT" or self.has_section(instrum)):
             raise NameError(f"{instrum} not found in config file")
         if encryption is None and not force and option in ["sql_passwd"]:

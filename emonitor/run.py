@@ -26,13 +26,16 @@ logger = logging.getLogger(__name__)
 def get_columns(settings, tcol="TIMESTAMP"):
     """ get columns from sensor names """
     sensors = settings["sensors"]
-    if "column_fmt" in settings:
+    if "columns" in settings:
+        columns = (tcol,) + tuple(settings["columns"])
+    elif "column_fmt" in settings:
         column_fmt = settings["column_fmt"]
         columns = (tcol,) \
                   + tuple([column_fmt.replace("{sensor}", str(sen).strip()) for sen in sensors])
     else:
         columns = (tcol,) \
                   + tuple([str(sen).strip() for sen in sensors])
+    assert len(columns) - 1 == len(sensors), "number of sensors and output columns mismatched"
     return columns
 
 
@@ -111,13 +114,9 @@ def run(config, instrum, wait,
     try:
         device = get_device(settings, instrum)
         # sqlite output
-        db = None
-        if output:
-            db = get_sqlite(settings, columns)
+        db = get_sqlite(settings, columns) if output else None
         # sql output
-        sql_conn = None
-        if sql:
-            sql_conn = get_sql(settings)
+        sql_conn = get_sql(settings) if sql else None
         # header
         if tty:
             if not quiet:
