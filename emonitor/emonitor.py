@@ -149,6 +149,9 @@ def main():
     parser_create.set_defaults(func=data.create, log="data")
     parser_create.add_argument("name", type=str, help="database name")
     parser_create.add_argument("-c", "--columns", nargs="+", required=True, help="table column(s)")
+    parser_create.add_argument("--tcol", type=str, help="timestamp column name", default="TIMESTAMP")
+    parser_create.add_argument("--dry_run", action="store_true", default=False,
+                               help="simulate db creation")
     parser_create.add_argument("-q", "--quiet", action="store_true", default=False,
                                help="no printed output")
     parser_create.add_argument("--overwrite", action="store_true", default=False,
@@ -163,6 +166,8 @@ def main():
                                  help="device name(s) [if None then all].")
     parser_generate.add_argument("-q", "--quiet", action="store_true", default=False,
                                  help="no printed output")
+    parser_generate.add_argument("--dry_run", action="store_true", default=False,
+                                 help="simulate db generation")
     parser_generate.add_argument("--overwrite", action="store_true", default=False,
                                  help="overwrite existing")
     parser_generate.add_argument("--force", action="store_true", default=False,

@@ -30,11 +30,11 @@ def db_path(name):
     return fil
 
 
-def db_init(conn, table, columns):
+def db_init(conn, table, columns, tcol="TIMESTAMP"):
     """ initialize sqlite database
     """
     column_str = ", ".join(['`' + str(c) + '` DOUBLE DEFAULT NULL' for c in columns])
-    sql = f"CREATE TABLE {table}(`TIMESTAMP` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, {column_str});"
+    sql = f"CREATE TABLE {table}(`{tcol}` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, {column_str});"
     logger.debug(f"db_init() sql: {sql}")
     cursor = conn.cursor()
     cursor.execute(sql)
@@ -105,6 +105,23 @@ def sql_insert(conn, table, columns, values):
     cursor = conn.cursor()
     cursor.execute(sql, values)
     conn.commit()
+
+
+def get_columns(settings, tcol="TIMESTAMP"):
+    """ get columns from sensor names """
+    sensors = settings["sensors"]
+    assert isinstance(sensors, Iterable), "`sensors` must be iterable"
+    if "columns" in settings:
+        columns = tuple(settings["columns"])
+    elif "column_fmt" in settings:
+        column_fmt = settings["column_fmt"]
+        columns = tuple([column_fmt.replace("{sensor}", str(sen).strip()) for sen in sensors])
+    else:
+        columns = tuple([str(sen).strip() for sen in sensors])
+    assert len(columns) == len(sensors), "number of sensors and output columns mismatched"
+    if tcol is not None:
+        columns = (tcol,) + columns
+    return columns
 
 
 def history(conn, start, end, **kwargs):

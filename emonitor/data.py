@@ -12,7 +12,11 @@ from ast import literal_eval
 from collections.abc import Iterable
 from humanize import naturalsize
 from .core import TABLE
-from .tools import db_init, db_count, db_describe
+from .tools import (db_init,
+                    db_count,
+                    db_describe,
+                    get_columns,
+                    parse_settings)
 logger = logging.getLogger(__name__)
 
 
@@ -52,35 +56,42 @@ class EmonitorData(object):
             info["schema"] = desc
         return info
 
-    def create(self, name, columns, overwrite=False, quiet=False):
+    def create(self, name, columns, tcol="TIMESTAMP",
+               dry_run=False, overwrite=False, quiet=False):
         """  create sqlite database
         """
         assert isinstance(columns, Iterable), "`columns` must be iterable"
+        columns = tuple(columns)
         fname, _ = os.path.splitext(name)
         fname += ".db"
         fil = os.path.join(self.dire, fname)
         if os.path.isfile(fil):
             if overwrite:
-                os.remove(fil)
+                if not dry_run:
+                    os.remove(fil)
             else:
                 raise OSError("File already exists.  Use --overwrite.")
         if not quiet:
             print(f"Creating {fname} with columns : {columns}")
-        logger.info(f"create(): fname={fname}, columns={columns}")
-        with sqlite3.connect(fil) as db:
-            db_init(db, TABLE, columns)
+        logger.info(f"create(): fname={fname}, tcol={tcol}, columns={columns}")
+        if not dry_run:
+            with sqlite3.connect(fil) as db:
+                db_init(db, TABLE, columns, tcol=tcol)
 
-    def generate(self, config, instruments, overwrite=False, force=False, quiet=False):
+    def generate(self, config, instruments,
+                 dry_run=False, overwrite=False, force=False, quiet=False):
         """ automatically create sqlite databases according to instrument configuration
         """
         if len(instruments) == 0:
             # generate for all sections
             instruments = config.sections()
         # check instrum exists
+        num_new = 0
         for instrum in instruments:
             if not config.has_section(instrum):
                 raise NameError(f"{instrum} not found in config file")
-            settings = dict(config.items(instrum))
+            settings = parse_settings(config, instrum)
+            tcol = settings.get("tcol", "TIMESTAMP")
             # checks
             assert "db" in settings, f"`db` not set for {instrum}"
             assert "sensors" in settings, f"`sensors` not set for {instrum}"
@@ -88,13 +99,7 @@ class EmonitorData(object):
             name = settings["db"]
             fname, _ = os.path.splitext(name)
             fname += ".db"
-            # get columns from instrument sensors
-            sensors = literal_eval(settings["sensors"])
-            assert isinstance(sensors, Iterable), "`sensors` must be iterable"
-            if "column_fmt" in settings:
-                columns = [settings["column_fmt"].replace("{sensor}", str(sen)) for sen in sensors]
-            else:
-                columns = [str(sen) for sen in sensors]
+            columns = get_columns(settings, tcol=None)
             # sqlite database
             fil = os.path.join(self.dire, fname)
             ## check existing
@@ -102,14 +107,18 @@ class EmonitorData(object):
                 prompt = f"Are you sure you want to permanently destroy {fname} (y/n) ?"
                 if force or input(prompt).lower() in ["y", "yes"]:
                     logger.debug(f"generate(), remove: {fil}")
-                    os.remove(fil)
+                    if not dry_run:
+                        os.remove(fil)
             ## create
             if not os.path.exists(fil):
                 if not quiet:
                     print(f"Creating {fname} with columns {columns}")
-                logger.info(f"generate(): fname={fname}, columns={columns}")
-                with sqlite3.connect(fil) as db:
-                    db_init(db, TABLE, columns)
+                logger.info(f"generate(): fname={fname}, tcol={tcol}, columns={columns}")
+                num_new += 1
+                if not dry_run:
+                    with sqlite3.connect(fil) as db:
+                        db_init(db, TABLE, columns, tcol)
+        logger.debug(f"generate(), number of new sqlite databases: {num_new}")
 
     def destroy(self, name, force=False):
         """  destroy sqlite database

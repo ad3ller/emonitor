@@ -19,24 +19,9 @@ from .core import (TABLE,
 from .tools import (db_check,
                     db_insert,
                     sql_insert,
+                    get_columns,
                     parse_settings)
 logger = logging.getLogger(__name__)
-
-
-def get_columns(settings, tcol="TIMESTAMP"):
-    """ get columns from sensor names """
-    sensors = settings["sensors"]
-    if "columns" in settings:
-        columns = (tcol,) + tuple(settings["columns"])
-    elif "column_fmt" in settings:
-        column_fmt = settings["column_fmt"]
-        columns = (tcol,) \
-                  + tuple([column_fmt.replace("{sensor}", str(sen).strip()) for sen in sensors])
-    else:
-        columns = (tcol,) \
-                  + tuple([str(sen).strip() for sen in sensors])
-    assert len(columns) - 1 == len(sensors), "number of sensors and output columns mismatched"
-    return columns
 
 
 def get_device(settings, instrum):
@@ -104,9 +89,9 @@ def run(config, instrum, wait,
         output=False, sql=False, header=True, quiet=False):
     """ start the emonitor server and output to sqlite database.
     """
-    logger.info(f"start: instrum={instrum}, wait={wait}, output={output}, sql={sql}")
     tty = sys.stdout.isatty()
     settings = parse_settings(config, instrum)
+    logger.info(f"start: instrum={instrum}, wait={wait}, output={output}, sql={sql}")
     logger.debug(f"{instrum} settings: {settings}")
     tcol = settings.get("tcol", "TIMESTAMP")
     columns = get_columns(settings, tcol)

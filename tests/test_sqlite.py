@@ -19,7 +19,7 @@ COLUMNS = ('A', 'B', 'C')
 TCOL = 'TIMESTAMP'
 NAME = '__pytest__.db'
 DB = db_path(NAME)
-if os.path.exists(DB):
+if os.path.isfile(DB):
     os.remove(DB)
 CONN = sqlite3.connect(DB)
 DATA = [('2016-12-09 09:08:13', 1, 34.8, 3),
