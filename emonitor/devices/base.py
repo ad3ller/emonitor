@@ -6,7 +6,6 @@ Created on Mon Jan  1 21:38:13 2018
 """
 import logging
 from abc import ABC, abstractmethod
-from serial import Serial
 logger = logging.getLogger(__name__)
 
 
@@ -41,17 +40,8 @@ class Device(ABC):
         pass
 
 
-class SerialDevice(Serial, Device):
+class SerialDevice(ABC):
     """ communication with a serial device """
-    def __init__(self, settings):
-        self.settings = settings
-        self.serial_settings = get_serial_settings(settings)
-        self.sensors = settings.get("sensors", None)
-        self.null_values = settings.get("null_values", None)
-        self.num_serial_errors = 0
-        # initialise Serial class
-        super().__init__(**self.serial_settings)
-
     def check_reset(self):
         """ check / reset connection """
         try:
@@ -69,11 +59,6 @@ class SerialDevice(Serial, Device):
                 self.close()
             self.open()
             self.flush()
-
-    @abstractmethod
-    def read_sensor(self, sensor):
-        """ read individual sensor """
-        pass
 
     def read_data(self, sensors=None):
         """ read all sensor data """
@@ -98,3 +83,20 @@ class SerialDevice(Serial, Device):
             except:
                 logger.exception("Exception occurred")
                 yield None
+
+    @abstractmethod
+    def read_sensor(self, sensor):
+        pass
+
+    @abstractmethod
+    def open(self):
+        pass
+
+    @abstractmethod
+    def flush(self):
+        pass
+ 
+    @abstractmethod
+    def close(self):
+        pass
+

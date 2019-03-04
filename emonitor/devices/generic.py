@@ -7,17 +7,24 @@ Created on Mon Jan  1 21:38:13 2018
 import codecs
 import re
 import logging
-from .base import SerialDevice
+from serial import Serial
+from .base import get_serial_settings, SerialDevice
 logger = logging.getLogger(__name__)
 
 
-class Generic(SerialDevice):
+class Generic(Serial, SerialDevice):
     """ communication with a serial device """
     def __init__(self, settings):
-        self.cmd = codecs.decode(self.settings["cmd"], "unicode-escape")
+        self.settings = settings
+        self.cmd = codecs.decode(settings["cmd"], "unicode-escape")
         self.regex = settings.get("regex", None)
-        super().__init__(**settings)
-
+        self.sensors = settings.get("sensors", None)
+        self.null_values = settings.get("null_values", None)
+        # initialise Serial class
+        self.num_serial_errors = 0
+        self.serial_settings = get_serial_settings(settings)
+        super().__init__(**self.serial_settings)
+ 
     def read_sensor(self, sensor):
         """ read sensor data """
         # parse command
