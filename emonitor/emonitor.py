@@ -44,6 +44,7 @@ DESCRIPTION = """
     run                 start emonitor
     """
 
+
 def main():
     """ run emonitor as a script """
     # read instrum.ini
@@ -218,6 +219,8 @@ def main():
                             format="%(name)s %(message)s")
     else:
         if log is None:
+            assert "instrum" in args, "`instrum` not specified"
+            assert args["instrum"] in config.instruments(), f"{args['instrum']} not in instrum.ini"
             log = args["instrum"]
         fname, _ = os.path.splitext(log)
         fname += ".log"
