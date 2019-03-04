@@ -7,23 +7,24 @@ Created on Mon Jan  1 21:38:13 2018
 import codecs
 import re
 import logging
-from serial import Serial
-from .base import get_serial_settings, SerialDevice
+from .base import SerialDevice
 logger = logging.getLogger(__name__)
 
 
-class Generic(Serial, SerialDevice):
+class Generic(SerialDevice):
     """ communication with a serial device """
     def __init__(self, settings):
-        self.settings = settings
         self.cmd = codecs.decode(settings["cmd"], "unicode-escape")
+        # acknowledge / enquire
+        if "ack" in settings and "enq" in settings:
+            self.ack = codecs.decode(settings["ack"], "unicode-escape")
+            self.enq = codecs.decode(settings["enq"], "unicode-escape")
+        else:
+            self.ack = None
+            self.enq = None
+        # format response
         self.regex = settings.get("regex", None)
-        self.sensors = settings.get("sensors", None)
-        self.null_values = settings.get("null_values", None)
-        # initialise Serial class
-        self.num_serial_errors = 0
-        self.serial_settings = get_serial_settings(settings)
-        super().__init__(**self.serial_settings)
+        super().__init__(settings)
  
     def read_sensor(self, sensor):
         """ read sensor data """
@@ -34,15 +35,12 @@ class Generic(Serial, SerialDevice):
         # write command, read response
         self.write(serial_cmd)
         # wait for acknowledgement / send enquiry
-        if "ack" in self.settings and "enq" in self.settings:
-            # needed for maxigauge
-            ack = codecs.decode(self.settings["ack"], "unicode-escape")
+        if self.ack is not None and self.enq is not None:
             response = self.readline()
             logger.debug(f"read_data() sensor {sensor} acknowledgement: {response}")
-            if response == bytes(ack, "utf8"):
+            if response == bytes(self.ack, "utf8"):
                 # send enquiry
-                enq = codecs.decode(self.settings["enq"], "unicode-escape")
-                self.write(bytes(enq, "utf8"))
+                self.write(bytes(self.enq, "utf8"))
             else:
                 raise Exception("sensor {sen} acknowledgement failed")
         response = self.readline()
