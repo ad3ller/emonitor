@@ -24,14 +24,30 @@ class CausalityError(ValueError):
 
 
 def db_path(name):
-    """ Get path of sqlite file for 'name'.
+    """ build path of SQLite database file
+
+    args:
+        name         database name        str
+
+    return:
+        fil
     """
-    fil = os.path.join(DATA_DIRE, name + '.db')
+    fname, _ = os.path.splitext(name)
+    fname += ".db"
+    fil = os.path.join(DATA_DIRE, fname)
     return fil
 
 
 def db_init(conn, table, columns, tcol="TIMESTAMP"):
-    """ initialize sqlite database
+    """ initialize SQLite database
+
+    args:
+        conn               connection to db
+        table              name of the table
+        columns            list of columns (excl. tcol)
+        
+    kwargs:
+        tcol='TIMESTAMP'   name of timestamp column
     """
     column_str = ", ".join(['`' + str(c) + '` DOUBLE DEFAULT NULL' for c in columns])
     sql = f"CREATE TABLE {table}(`{tcol}` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, {column_str});"
@@ -42,7 +58,12 @@ def db_init(conn, table, columns, tcol="TIMESTAMP"):
 
 
 def db_check(conn, table, columns):
-    """ check sqlite database
+    """ check columns all exist in SQLite database
+
+    args:
+        conn               connection to db
+        table              name of the table
+        columns            list of columns
     """
     sql = f"SELECT * FROM {table};"
     logger.debug(f"db_check() sql: {sql}")
@@ -59,7 +80,14 @@ def db_check(conn, table, columns):
 
 
 def db_count(conn, table):
-    """ count rows in sqlite table
+    """ count rows in SQLite table
+
+    args:
+        conn               connection to db
+        table              name of the table
+
+    return:
+        number of rows
     """
     sql = f"SELECT COUNT(*) as count FROM {table};"
     logger.debug(f"db_count() sql: {sql}")
@@ -73,6 +101,13 @@ def db_count(conn, table):
 
 def db_describe(conn, table):
     """ get sqlite database structure
+    
+    args:
+        conn               connection to db
+        table              name of the table
+
+    return:
+        info
     """
     sql = f"PRAGMA table_info({table});"
     logger.debug(f"db_describe() sql: {sql}")
@@ -85,6 +120,12 @@ def db_describe(conn, table):
 
 def db_insert(conn, table, columns, values):
     """ INSERT INTO {table} {columns} VALUES {values};
+
+    args:
+        conn               connection to SQLite db
+        table              name of the table
+        columns            list of columns
+        values             list of values
     """
     col_str = str(tuple(columns)).replace("'", "`")
     val_str = ", ".join(tuple('?' for c in columns))
@@ -97,6 +138,12 @@ def db_insert(conn, table, columns, values):
 
 def sql_insert(conn, table, columns, values):
     """ INSERT INTO {table} {columns} VALUES {values};
+
+    args:
+        conn               connection to SQL server
+        table              name of the table
+        columns            list of columns
+        values             list of values
     """
     col_str = str(tuple(columns)).replace("'", "`")
     val_str = ", ".join(tuple(r'%s' for c in columns))
@@ -108,7 +155,24 @@ def sql_insert(conn, table, columns, values):
 
 
 def get_columns(settings, tcol="TIMESTAMP"):
-    """ get columns from sensor names """
+    """ get columns from sensor names
+
+    Order of preference for extracting columns from settings:
+
+        1) settings['columns']
+        2) replace {sensor} in settings['column_fmt'] with 
+           each of settings['sensors']
+        3) settings['sensors']
+    
+    args:
+        settings           dict() of settings
+    
+    kwargs:
+        tcol='TIMESTAMP'   name of timestamp column
+
+    return:
+        list of columns
+    """
     sensors = settings["sensors"]
     assert isinstance(sensors, Iterable), "`sensors` must be iterable"
     if "columns" in settings:
@@ -124,33 +188,89 @@ def get_columns(settings, tcol="TIMESTAMP"):
     return columns
 
 
+def format_commands(settings):
+    """ format string commands
+   
+    Replace special characters ["$CR", "$LF", "$ACK", "$ENQ"]
+    in settings['cmd', 'ack', 'enq'].
+
+    args:
+        settings           dict() of settings
+
+    return:
+        modified settings
+    """
+    for key in ['cmd', 'ack', 'enq']:
+        if key in settings:
+            value = settings[key]
+            if isinstance(value, str):
+                # string replacements
+                for placeholder, replacement in [("$CR", "\x0D"),
+                                                 ("$LF", "\x0A"),
+                                                 ("$ACK", "\x06"),
+                                                 ("$ENQ", "\x05")]:
+                    if placeholder in value:
+                        value = value.replace(placeholder, replacement)
+                settings[key] = value
+    return settings
+
+
+def parse_settings(conf, instrum, ignore=None):
+    """ read config section and use ast.literal_eval() to get python dtypes
+
+    args:
+        conf              config file
+        instrum           name of device
+
+    kwargs:
+        ignore=None       list of keys whose values won't be passed to ast.literal_eval()
+
+    return:
+        modified settings
+    """
+    settings = dict()
+    # keys to ignore
+    if ignore is None:
+        ignore = []
+    if not isinstance(ignore, Iterable):
+        ignore = [ignore]
+    # evaluate items
+    for key, value in conf.items(instrum):
+        if key in ignore:
+            settings[key] = value
+        else:
+            try:
+                settings[key] = literal_eval(value)
+            except:
+                settings[key] = value
+    return format_commands(settings)
+
+
 def history(conn, start, end, **kwargs):
     """ SELECT * FROM table WHERE tcol BETWEEN start AND end.
 
-        If start and end are more than 24 hours apart, then a random
-        sample of length specified by 'limit' is returned, unless
-        'full_resolution' is set to True.
+    If start and end are more than 24 hours apart, then a random
+    sample of length specified by 'limit' is returned.
 
-        args:
-            conn          database connection           object
-            start         query start time              datetime.datetime / tuple / dict
-            end           query end time                datetime.datetime / tuple / dict
+    args:
+        conn          database connection           object
+        start         query start time              datetime.datetime / tuple / dict
+        end           query end time                datetime.datetime / tuple / dict
 
-        kwargs:
-            table='data'             name of table in database        str
-            limit=6000               max number of rows               int
-            tcol='TIMESTAMP'         timestamp column name            str
-            full_resolution=False    No limit - return everything     bool
-            coerce_float=False       convert, e.g., decimal to float  bool
-            dropna=True              drop NULL columns                bool
-        return:
-            result       pandas.DataFrame
+    kwargs:
+        table='data'             name of table in database        str
+        limit=6000               max number of rows               int or None
+        tcol='TIMESTAMP'         timestamp column name            str
+        coerce_float=False       convert, e.g., decimal to float  bool
+        dropna=True              drop NULL columns                bool
+    
+    return:
+        result         pandas.DataFrame
     """
     # read kwargs
     table = kwargs.get('table', 'data')
     limit = kwargs.get('limit', 6000)
     tcol = kwargs.get('tcol', 'TIMESTAMP')
-    full_resolution = kwargs.get('full_resolution', False)
     coerce_float = kwargs.get('coerce_float', False)
     dropna = kwargs.get('dropna', True)
     # start
@@ -180,7 +300,7 @@ def history(conn, start, end, **kwargs):
     else:
         rand = "RAND()"
     # SQL query
-    if full_resolution or limit is None:
+    if limit is None:
         reorder = False
         sql = f"SELECT * FROM `{table}` WHERE `{tcol}` BETWEEN '{start}' AND '{end}';"
     # check start and end are on the same day
@@ -208,23 +328,22 @@ def history(conn, start, end, **kwargs):
 def live(conn, delta=None, **kwargs):
     """ SELECT * FROM table WHERE tcol BETWEEN (time.now() - delta) AND time.now().
 
-        If delta is more than 24 hours then a random sample of length specified
-        by 'limit' is returned, unless 'full_resolution' is set to True.
+    If delta is more than 24 hours then a random sample of length specified
+    by 'limit' is returned.
 
-        args:
-            conn          database connection           object
-            delta         query start time              datetime.timedelta / dict
+    args:
+        conn          database connection           object
+        delta         query start time              datetime.timedelta / dict
 
-        kwargs:
-            table='data'             name of table in database        str
-            limit=6000               max number of rows               int
-            tcol='TIMESTAMP'         timestamp column name            str
-            full_resolution=False    No limit - return everything     bool
-            coerce_float=True        convert, e.g., decimal to float  bool
-            dropna=True              drop NULL columns                bool
-        return:
-            result       pandas.DataFrame
-
+    kwargs:
+        table='data'             name of table in database        str
+        limit=6000               max number of rows               int or None
+        tcol='TIMESTAMP'         timestamp column name            str
+        coerce_float=True        convert, e.g., decimal to float  bool
+        dropna=True              drop NULL columns                bool
+    
+    return:
+        result         pandas.DataFrame
     """
     if delta is None:
         delta = {"hours" : 4}
@@ -237,110 +356,3 @@ def live(conn, delta=None, **kwargs):
     end = datetime.datetime.now()
     start = end - delta
     return history(conn, start, end, **kwargs)
-
-
-def tquery(conn, start=None, end=None, **kwargs):
-    """ ------------------------------------------------------------
-        DeprecationWarning
-            Use history() or live() instead.
-        ------------------------------------------------------------
-
-        SELECT * FROM table WHERE tcol BETWEEN start AND end.
-
-        If start is None, it will be set to time.now() - delta [default:
-        4 hours], i.e., live mode.
-
-        If end is None, set to start + delta, i.e., to select a given time
-        window, specify either: start and end, or start and delta.
-
-        If start and end are more than 24 hours apart, then a random
-        sample of length specified by 'limit' is returned, unless
-        'full_resolution' is set to True.
-
-        args:
-            conn          database connection           object
-            start         query start time              datetime.datetime
-            end           query end time                datetime.datetime
-
-        kwargs:
-            delta=datetime.timedelta(hours=4)
-                                     time to look back in live mode   datetime.timedelta
-            table='data'             name of table in database        str
-            limit=6000               max number of rows               int
-            tcol='TIMESTAMP'         timestamp column name            str
-            full_resolution=False    No limit - return everything     bool
-            coerce_float=True        convert, e.g., decimal to float  bool
-            dropna=True              drop NULL columns                bool
-        return:
-            result       pandas.DataFrame
-    """
-    warnings.warn("tquery() is deprecated. Use history() or live() instead.", DeprecationWarning)
-    # read kwargs
-    delta = kwargs.get('delta', datetime.timedelta(hours=4))
-    start, end = get_trange(start, end, delta)
-    result = history(conn, start, end, **kwargs)
-    return result
-
-
-def get_trange(start, end, delta):
-    """ find start and end times from inputs
-    """
-    if not isinstance(start, datetime.datetime) or not isinstance(end, datetime.datetime):
-        # start or end unspecified -> delta required
-        if not isinstance(delta, datetime.timedelta):
-            # check delta type
-            raise TypeError('delta must be of type datetime.timedelta')
-        # check whether start or end is missing
-        if not isinstance(start, datetime.datetime):
-            # start not specified, check end
-            if not isinstance(end, datetime.datetime):
-                # neither start nor end specified -> live mode
-                end = datetime.datetime.now()
-            # infer start from end and delta
-            start = end - delta
-        if not isinstance(end, datetime.datetime):
-            # infer end from start and delta
-            end = start + delta
-    # all good?
-    if end < start:
-        raise CausalityError('end before start')
-    return start, end
-
-
-def format_commands(settings):
-    """ format string commands
-    """
-    for key in ['cmd', 'ack', 'enq']:
-        if key in settings:
-            value = settings[key]
-            if isinstance(value, str):
-                # string replacements
-                for placeholder, replacement in [("$CR", "\x0D"),
-                                                 ("$LF", "\x0A"),
-                                                 ("$ACK", "\x06"),
-                                                 ("$ENQ", "\x05")]:
-                    if placeholder in value:
-                        value = value.replace(placeholder, replacement)
-                settings[key] = value
-    return settings
-
-
-def parse_settings(conf, instrum, ignore=None):
-    """ read config section and use ast.literal_eval() to get python dtypes
-    """
-    settings = dict()
-    # keys to ignore
-    if ignore is None:
-        ignore = []
-    if not isinstance(ignore, Iterable):
-        ignore = [ignore]
-    # evaluate items
-    for key, value in conf.items(instrum):
-        if key in ignore:
-            settings[key] = value
-        else:
-            try:
-                settings[key] = literal_eval(value)
-            except:
-                settings[key] = value
-    return format_commands(settings)

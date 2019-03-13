@@ -41,7 +41,7 @@ class Device(ABC):
         pass
 
 
-class SerialDevice(Serial, ABC):
+class SerialDevice(Serial, Device):
     """ communication with a serial device """
     def __init__(self, settings):
         self.sensors = settings.get("sensors", None)
