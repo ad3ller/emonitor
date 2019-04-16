@@ -34,15 +34,10 @@ The configuration file can be viewed using ``emonitor config``. ::
     column_fmt = {sensor}
 
     [lakeshore336]
+    device_class = lakeshore.Model_336
     db = temperature
     sensors = ['A', 'B', 'C']
-    cmd = KRDG?{sensor}\r\n
-    parity = O
-    stopbits = 1
-    bytesize = 7
-    baudrate = 57600
     port = COM8
-    timeout = 1
 
 The settings in the `DEFAULT` section are shared by all of the devices.  These can be assigned using ``emonitor set``.
 
@@ -107,7 +102,7 @@ key         description
 ==========  ===============================================
 db          name of SQLite database
 tcol        name of timestamp column (default: "TIMESTAMP")
-column_fmt  format column names, e.g., PG\_<sensor>
+column_fmt  format column names, e.g., PG\_{sensor}
 sql_host    SQL server ip address
 sql_port    SQL server port number
 sql_user    username with INSERT privileges

@@ -29,26 +29,26 @@ class Generic(SerialDevice):
     def read_sensor(self, sensor):
         """ read sensor data """
         # parse command
-        serial_cmd = self.cmd.replace("{sensor}", sensor)
-        serial_cmd = bytes(serial_cmd, "utf8")
-        logger.debug(f"read_data() sensor {sensor} query: {serial_cmd}")
-        # write command, read response
-        self.write(serial_cmd)
+        serial_cmd = self.cmd.format(sensor=sensor)
+        logger.debug(f"read_data() sensor={sensor} query: {serial_cmd}")
+        # write command
+        self.write(bytes(serial_cmd, "utf8"))
         # wait for acknowledgement / send enquiry
         if self.ack is not None and self.enq is not None:
             response = self.readline()
-            logger.debug(f"read_data() sensor {sensor} acknowledgement: {response}")
+            logger.debug(f"read_data() sensor={sensor} acknowledgement: {response}")
             if response == bytes(self.ack, "utf8"):
                 # send enquiry
                 self.write(bytes(self.enq, "utf8"))
             else:
-                raise Exception("sensor {sen} acknowledgement failed")
+                raise Exception(f"sensor={sensor} acknowledgement failed")
+        # read response
         response = self.readline()
-        logger.debug(f"read_data() sensor {sensor} response: {response}")
+        logger.debug(f"read_data() sensor={sensor} response: {response}")
         # format response
         response = response.strip().decode("utf-8")
         if self.regex is not None:
             match = re.search(self.regex, response)
             response = match.group(1)
-            logger.debug(f"read_data() sensor {sensor} regex `{self.regex}` match: {response}")
+            logger.debug(f"read_data() sensor={sensor} regex `{self.regex}` match: {response}")
         return response
