@@ -35,12 +35,12 @@ class Model_336(SerialDevice):
         """ read sensor data """
         # parse command
         serial_cmd = self.cmd.format(sensor=sensor)
-        logger.debug(f"read_data() sensor {sensor} query: {serial_cmd}")
+        logger.debug(f"read_data() sensor={sensor} query: {serial_cmd}")
         # write command
         self.write(bytes(serial_cmd, "utf8"))
         # read response
         response = self.readline()
-        logger.debug(f"read_data() sensor {sensor} response: {response}")
+        logger.debug(f"read_data() sensor={sensor} response: {response}")
         # format
         response = response.strip().decode("utf-8")
         return response
@@ -48,5 +48,4 @@ class Model_336(SerialDevice):
 
 class Model_331(Model_336):
     """ read Lakeshore Model 331 sensors """
-    def __init__(self, settings):
-        super().__init__(settings)
+    pass
