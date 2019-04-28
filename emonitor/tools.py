@@ -273,6 +273,7 @@ def history(conn, start, end, **kwargs):
     tcol = kwargs.get('tcol', 'TIMESTAMP')
     coerce_float = kwargs.get('coerce_float', False)
     dropna = kwargs.get('dropna', True)
+    ascending = kwargs.get('ascending', True)
     # start
     if isinstance(start, datetime.datetime):
         pass
@@ -303,24 +304,21 @@ def history(conn, start, end, **kwargs):
     if limit is None:
         reorder = False
         sql = f"SELECT * FROM `{table}` WHERE `{tcol}` BETWEEN '{start}' AND '{end}';"
-    # check start and end are on the same day
-    elif end - datetime.timedelta(days=1) < start:
-        reorder = False
-        sql = f"SELECT * FROM `{table}` WHERE `{tcol}` BETWEEN '{start}' AND '{end}' LIMIT {limit};"
     else:
-        # if time span is more than 1 day randomly sample measurements from range
+        # random sample from range
         reorder = True
         sql = f"SELECT * FROM `{table}` WHERE `{tcol}` BETWEEN '{start}' AND '{end}' ORDER BY {rand} LIMIT {limit};"
     logger.debug(f"history() sql: {sql}")
     result = pd.read_sql_query(sql, conn, coerce_float=coerce_float, parse_dates=[tcol])
     if len(result.index) > 0:
+        logger.debug(f"history() num_rows: {len(result.index)}")
         result.replace("NULL", np.nan, inplace=True)
         if dropna:
             # remove empty columns
             result = result.dropna(axis=1, how='all')
-        if reorder:
+        if reorder or not ascending:
             # sort data by timestamp
-            result = result.sort_values(by=tcol)
+            result = result.sort_values(by=tcol, ascending=ascending)
         result = result.set_index(tcol)
     return result
 

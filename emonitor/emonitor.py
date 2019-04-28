@@ -13,7 +13,7 @@ from .encryption import fernet_key
 from .data import EmonitorData
 from .config import EmonitorConfig
 from .run import run
-
+from .plot import plot
 
 DESCRIPTION = """
     config
@@ -42,6 +42,10 @@ DESCRIPTION = """
     emonitor
     --------
     run                 start emonitor
+
+    plotting
+    --------
+    plot                start bokeh server
     """
 
 
@@ -197,12 +201,19 @@ def main():
                             help="wait time (s) between queries")
     parser_run.add_argument("-n", "--no_header", dest="header", action="store_false", default=True,
                             help="don't print header, e.g., when appending to a file")
-    # TODO probably PyQtGraph, maybe vispy
-    #parser_run.add_argument("-p", "--plot", action="store_true", default=False,
-    #                    help="live data plotting")
     parser_run.add_argument("-q", "--quiet", action="store_true", default=False,
                             help="no printed output")
     parser_run.add_argument("--debug", action="store_true", default=False,
+                            help="enable debugging")
+
+    # bokeh server
+    parser_plot = subparsers.add_parser("plot")
+    parser_plot.set_defaults(func=plot, log="plot")
+    parser_plot.add_argument("-p", "--port", default=None,
+                            help="bokeh server port")
+    parser_plot.add_argument("--show", action="store_true", default=False,
+                            help="open browser")
+    parser_plot.add_argument("--debug", action="store_true", default=False,
                             help="enable debugging")
 
     # format user input
