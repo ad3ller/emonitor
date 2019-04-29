@@ -2,6 +2,7 @@
 import os
 import sqlite3
 import datetime
+import warnings
 # emonitor
 from emonitor.tools import db_path, history
 from emonitor.core import INSTRUM_FILE
@@ -48,8 +49,12 @@ def make_plot(instrum):
     # format
     if y_axis_label is not None:
         fig.yaxis.axis_label = y_axis_label
-    fig.legend.location = "top_left"
-    fig.legend.click_policy="hide"
+ 
+    # surpress empty legend warnings
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        fig.legend.location = "top_left"
+        fig.legend.click_policy="hide"
 
     return fig
 
