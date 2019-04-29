@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import os
 import shutil
-VERSION = '0.1.22'
+VERSION = '0.1.23'
 MOD_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.curdir))
 EXAMPLE_INTRUM_FILE = os.path.join(MOD_PATH, 'instrum.ini')
 USER_DIRE = os.path.join(os.path.expanduser("~"), '.emonitor')
