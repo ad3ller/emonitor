@@ -34,6 +34,7 @@ def get_data(db, start, end, **kwargs):
 def make_plot(instrum):
     # config
     settings = config[instrum]
+    tcol = settings.get("tcol", "TIMESTAMP")
     y_axis_label = settings.get("y_axis_label", None)
     y_axis_type = settings.get("y_axis_type", "linear")
     
@@ -42,9 +43,12 @@ def make_plot(instrum):
                  x_axis_type="datetime", y_axis_type=y_axis_type)
 
     # plotting
-    for i, col in enumerate(source.column_names[1:]):
-        fig.line(source.column_names[0], col,
-                 line_color=colors[i], legend=value(col), source=source)
+    i = 0
+    for col in source.column_names:
+        if col != tcol:
+            fig.line(tcol, col,
+                    line_color=colors[i], legend=value(col), source=source)
+            i += 1
 
     # format
     if y_axis_label is not None:
