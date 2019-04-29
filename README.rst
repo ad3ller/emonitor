@@ -1,7 +1,7 @@
 emonitor
 ========
 
-A command-line program for reading and recording sensor data from serial devices.
+A command-line program for reading, recording and plotting sensor data from serial devices.
 
 Example configuration for a Pfeiffer Maxigauge vacuum pressure gauge reader and a Lakeshore 336 temperature controller.
 
@@ -27,7 +27,10 @@ the name of a configured serial device.
 
 .. code-block:: bash
 
-    $ emonitor run fake --wait 10
+    $ emonitor generate fake
+    Creating fake.db with columns ('A', 'B', 'C')
+
+    $ emonitor run fake -o --wait 10
     Starting emonitor. Use Ctrl-C to stop.
 
               TIMESTAMP            A	        B	        C
@@ -35,10 +38,16 @@ the name of a configured serial device.
     2018-05-12 13:20:54	     292.9262	 293.5138	 293.9303
     2018-05-12 13:21:04	     293.0826	 293.3233	 294.0555
     2018-05-12 13:21:14	     293.1931	 293.4301	 294.0839
-    ^C
-    Stopping emonitor.
+
 
 This queries the device for its sensor readings. Waits. And repeats.
+
+The data is logged to an SQLite database.  To plot live data, launch another terminal and execute:
+
+.. code-block:: bash
+
+    $ emonitor plot --show
+
 
 Documentation
 -------------
