@@ -3,7 +3,9 @@ emonitor
 
 A command-line program for reading, recording and plotting sensor data from serial devices.
 
-Example configuration for a Pfeiffer Maxigauge vacuum pressure gauge reader and a Lakeshore 336 temperature controller.
+Designed to work with generic serial devices.  Includes example configuration for a Pfeiffer MaxiGauge vacuum pressure gauge reader and a Lakeshore Model-336 temperature controller.
+
+Interactive plotting of live data is done with a `bokeh <https://github.com/bokeh/bokeh`_ server.
 
 Install
 -------
@@ -27,6 +29,8 @@ the name of a configured serial device.
 
 .. code-block:: bash
 
+    $ emonitor set fake --key sensors --value A B C
+
     $ emonitor generate fake
     Creating fake.db with columns ('A', 'B', 'C')
 
@@ -42,7 +46,7 @@ the name of a configured serial device.
 
 This queries the device for its sensor readings. Waits. And repeats.
 
-The data is logged to an SQLite database.  To plot live data, launch another terminal and execute:
+The data is recorded to an SQLite database.  To plot the live data, launch another terminal and execute:
 
 .. code-block:: bash
 
