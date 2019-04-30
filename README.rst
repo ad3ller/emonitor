@@ -5,8 +5,6 @@ A command-line program for reading, recording and plotting sensor data from seri
 
 Designed to work with generic serial devices.  Includes example configuration for a Pfeiffer MaxiGauge vacuum pressure gauge reader and a Lakeshore Model-336 temperature controller.
 
-Interactive plotting of live data is done with a `bokeh <https://github.com/bokeh/bokeh>`_ server.
-
 Install
 -------
 
@@ -46,7 +44,7 @@ the name of a configured serial device.
 
 This queries the device for its sensor readings. Waits. And repeats.
 
-The data is recorded to an SQLite database.  To plot the live data, launch another terminal and execute:
+The data is recorded to an SQLite database.  To plot the live data using `bokeh <https://github.com/bokeh/bokeh>`_, launch another terminal and execute:
 
 .. code-block:: bash
 
