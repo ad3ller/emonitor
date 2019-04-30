@@ -208,11 +208,13 @@ def main():
 
     # bokeh server
     parser_plot = subparsers.add_parser("plot")
-    parser_plot.set_defaults(func=plot, log="plot")
+    parser_plot.set_defaults(func=plot)
     parser_plot.add_argument("-p", "--port", default=None,
                             help="bokeh server port")
     parser_plot.add_argument("--show", action="store_true", default=False,
                             help="open browser")
+    parser_plot.add_argument("--log", action="store_true", default=False,
+                            help="logging level=info > .emonitor/logs/plot.log")
     parser_plot.add_argument("--debug", action="store_true", default=False,
                             help="enable debugging")
 
@@ -233,12 +235,18 @@ def main():
             assert "instrum" in args, "`instrum` not specified"
             assert args["instrum"] in config.instruments(), f"{args['instrum']} not in instrum.ini"
             log = args["instrum"]
-        fname, _ = os.path.splitext(log)
-        fname += ".log"
-        fil = os.path.join(LOG_DIRE, fname)
-        logging.basicConfig(filename=fil,
-                            level=logging.INFO,
-                            format="%(asctime)s [%(levelname)s] %(name)s - %(message)s")
+        if log:
+            if isinstance(log, bool):
+                log = func.__name__
+            fname, _ = os.path.splitext(log)
+            fname += ".log"
+            fil = os.path.join(LOG_DIRE, fname)
+            logging.basicConfig(filename=fil,
+                                level=logging.INFO,
+                                format="%(asctime)s [%(levelname)s] %(name)s - %(message)s")
+        else:
+            logging.basicConfig(level=logging.INFO,
+                                format="%(asctime)s [%(levelname)s] %(name)s - %(message)s")
 
     # execute
     response = func(**args)

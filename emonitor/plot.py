@@ -16,7 +16,7 @@ from bokeh.command.bootstrap import main
 def plot(show=False, port=None):
     """ run Bokeh server
     """
-    print("Starting Bokeh server")
+    logging.info("emonitor plot")
     cmd = ["bokeh", "serve"]
     if show:
         cmd.append("--show")
