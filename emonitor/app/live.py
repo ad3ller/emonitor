@@ -7,6 +7,8 @@ Created on Sun Apr 28 17:33:12 2019
 import sqlite3
 import datetime
 import warnings
+import logging
+logger = logging.getLogger(__name__)
 # ploting
 from bokeh.core.properties import value
 from bokeh.io import curdoc
@@ -45,11 +47,13 @@ def make_plot(instrum):
     # config
     settings = config[instrum]
     tcol = settings.get("tcol", "TIMESTAMP")
+    plot_height = int(settings.get("plot_height", 500))
+    plot_width = int(settings.get("plot_width", 700))
     y_axis_label = settings.get("y_axis_label", None)
     y_axis_type = settings.get("y_axis_type", "linear")
 
     # figure
-    fig = figure(plot_height=500, plot_width=700,
+    fig = figure(plot_height=plot_height, plot_width=plot_width,
                  x_axis_type="datetime", y_axis_type=y_axis_type)
 
     # plotting
@@ -123,8 +127,12 @@ def stream_data():
     new_data = get_data(db, start, end,
                         dropna=False, ascending=True, limit=None)
     if not isinstance(new_data, dict) and len(new_data.index) > 0:
+        new_data = ColumnDataSource(new_data).data
         source.stream(new_data)
         latest = end
+        logger.debug("stream new data")
+    else:
+        logger.debug("no new data")
 
 
 def refresh_plot(attr, old, new):

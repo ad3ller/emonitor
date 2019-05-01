@@ -18,7 +18,7 @@ class FakeError(ValueError):
 
 class Fake(Device):
     """ simulate comms. with a serial device"""
-    tvals = [293, 299, 305, 306]
+    tvals = {'A': 293, 'B': 299, 'C': 305, 'D': 306}
 
     def __init__(self, settings):
         self.settings = settings
@@ -29,16 +29,16 @@ class Fake(Device):
         """ return fake sensor data """
         if sensors is None:
             sensors = self.sensors
-        for i, sen in enumerate(sensors):
+        for sen in sensors:
             logger.debug(f"read_data() sensor: {sen}")
             try:
                 if random() < 0.05:
                     raise FakeError("DON'T PANIC")
-                noise = gauss(0, 0.1)
-                diff = self.tvals[i] - self.real_data[i]
-                drift = gauss(0.5 * diff, 0.05)
-                self.real_data[i] += drift
-                value = self.real_data[i] + noise
+                noise = gauss(0.0, 0.1)
+                diff = self.tvals[sen] - self.real_data[sen]
+                drift = gauss(diff, 0.05)
+                self.real_data[sen] += drift
+                value = self.real_data[sen] + noise
                 logger.debug(f"read_data() value: {value}")
                 yield f"{value:.4f}"
             except:
