@@ -22,17 +22,26 @@ Install using setuptools.
 Quick Start
 -----------
 
-``emonitor`` can be started from a terminal (or Anaconda prompt) using the sub-command `run` and
-the name of a configured serial device.
+The `emonitor` commands can be executed from a terminal (or Anaconda prompt).
+
+Configure the sensors for a (fake) serial device called `fake`.
 
 .. code-block:: bash
 
     $ emonitor set fake --key sensors --value A B C
 
+Next, create an SQLite database to store the fake data.
+
+.. code-block:: bash
+
     $ emonitor generate fake
     Creating fake.db with columns ('A', 'B', 'C')
 
-    $ emonitor run fake -o --wait 10
+And finally, start the service.
+
+.. code-block:: bash
+
+    $ emonitor run fake --output --wait 10
     Starting emonitor. Use Ctrl-C to stop.
 
               TIMESTAMP            A	        B	        C
@@ -44,7 +53,7 @@ the name of a configured serial device.
 
 This queries the device for its sensor readings. Waits. And repeats.
 
-The data is recorded to an SQLite database.  To plot the live data using `bokeh <https://github.com/bokeh/bokeh>`_, launch another terminal and execute:
+To plot the recorded data using `bokeh <https://github.com/bokeh/bokeh>`_, launch another terminal and execute:
 
 .. code-block:: bash
 
