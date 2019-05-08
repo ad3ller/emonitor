@@ -68,7 +68,7 @@ def make_plot(instrum):
     if y_axis_label is not None:
         fig.yaxis.axis_label = y_axis_label
 
-    # surpress empty legend warnings
+    # supress empty legend warnings
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         fig.legend.location = "top_left"
@@ -182,4 +182,4 @@ plot_data()
 stream = curdoc().add_periodic_callback(stream_data, stream_slider.value * 1000)
 
 # periodically refresh plot
-timeout = curdoc().add_periodic_callback(plot_data, 1024 * 1000)
+timeout = curdoc().add_periodic_callback(update_data, 1024 * 1000)

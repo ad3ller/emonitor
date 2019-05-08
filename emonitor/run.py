@@ -112,6 +112,7 @@ def run(config, instrum, wait,
                           "".join([c.rjust(str_width) for c in columns[1:]]))
         elif header:
             print(",".join(columns))
+        num_db_errors = 0
         num_sql_errors = 0
         # start server
         while True:
@@ -131,7 +132,14 @@ def run(config, instrum, wait,
                         val_str = tuple(str(v).replace("None", "NULL") for v in values)
                         print(",".join(val_str))
                     if output:
-                        db_insert(db, TABLE, columns, values)
+                        try:
+                            db_insert(db, TABLE, columns, values)
+                            num_db_errors = 0
+                        except:
+                            num_db_errors += 1
+                            if num_db_errors == 1:
+                                # log first failure
+                                logger.warning(f"Failed to INSERT data into {db}", exc_info=True)
                     if sql:
                         try:
                             if not sql_conn.open:
@@ -143,7 +151,7 @@ def run(config, instrum, wait,
                             num_sql_errors += 1
                             if num_sql_errors == 1:
                                 # log first failure
-                                logger.warning("Failed to connect to SQL server", exc_info=True)
+                                logger.warning(f"Failed to INSERT data into SQL database", exc_info=True)
             time.sleep(wait)
     except KeyboardInterrupt:
         pass
