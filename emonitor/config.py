@@ -4,12 +4,19 @@ Created on Sat Dec 23 13:43:09 2017
 
 @author: Adam
 """
+import os
 import sys
 import logging
+import sqlite3
 from getpass import getpass
 from collections.abc import Iterable
 from configparser import ConfigParser
+import pymysql
+from .core import DATA_DIRE
 logger = logging.getLogger(__name__)
+
+
+LIST_OPTIONS = ["sensors", "null_values", "columns"]
 
 
 class EmonitorConfig(ConfigParser):
@@ -83,12 +90,20 @@ class EmonitorConfig(ConfigParser):
             logger.info(f"remove(): instrum={instrum}")
             self.write()
 
+    def get(self, instrum, option, encryption=None, **kwargs):
+        """ get attribute value [with optional encryption] """
+        value = super().get(instrum, option, **kwargs)
+        if encryption is not None:
+            assert hasattr(encryption, "decrypt"), "encryption object must have method `decrpyt`"
+            logger.debug(f"get(): decrypt value")
+            value = encryption.decrypt(bytes(value, "utf8")).decode("utf8")
+        return value
+
     def set(self, instrum, option, value,
             encryption=None, force=False, write=True, **kwargs):
         """ set attribute value(s) [with optional encryption] """
         # checks
-        list_options = kwargs.get("list_options",
-                                  ["sensors", "null_values", "columns"])
+        list_options = kwargs.get("list_options", LIST_OPTIONS)
         if not (instrum == "DEFAULT" or self.has_section(instrum)):
             raise NameError(f"{instrum} not found in config file")
         if encryption is None and not force and option in ["sql_passwd"]:
@@ -113,7 +128,7 @@ class EmonitorConfig(ConfigParser):
             logger.debug(f"set(): encrypt value")
             value = encryption.encrypt(bytes(value, "utf-8")).decode("utf8")
         # set
-        super().set(instrum, option, value=str(value))
+        super().set(instrum, option, value=str(value), **kwargs)
         if write:
             logger.info(f"set(): instrum={instrum}, option={option}, value={value}")
             self.write()
@@ -137,3 +152,43 @@ class EmonitorConfig(ConfigParser):
             fil = self.fil
         with open(fil, "w+", encoding="utf8") as file_out:
             super().write(file_out)
+
+    def sqlite_connect(self, instrum):
+        """ open connection to sqlite database """
+        name = self.get(instrum, "db")
+        fname, _ = os.path.splitext(name)
+        fname += ".db"
+        fil = os.path.join(DATA_DIRE, fname)
+        if not os.path.isfile(fil):
+            raise OSError(f"{fname} does not exists.  Use generate or create.")
+        conn = sqlite3.connect(fil)
+        logger.info(f"connected to sqlite database: fname={fname}")
+        return conn
+
+    def sql_connect(self, instrum, encryption=None):
+        """ open connection to SQL database """
+        # settings
+        host = self.get(instrum, "sql_host")
+        port = int(self.get(instrum, "sql_port"))
+        database = self.get(instrum, "sql_db")
+        # username
+        if not self.has_option(instrum, "sql_user"):
+            sql_user = input("SQL username : ")
+        else:
+            sql_user = self.get(instrum, "sql_user")
+            print(f"SQL username : {sql_user}")
+        # password
+        if not self.has_option(instrum, "sql_passwd"):
+            sql_passwd = getpass(prompt="SQL password : ", stream=sys.stderr)
+        elif encryption is not None:
+            sql_passwd = self.get(instrum, "sql_passwd", encryption=encryption)
+        else:
+            raise ValueError("cannot decrypt sql_passwd using encryption=None")
+        # connect
+        conn = pymysql.connect(host=host,
+                               port=port,
+                               user=sql_user,
+                               password=sql_passwd,
+                               database=database)
+        logger.info(f"connected to SQL server: host={host}, database={database}")
+        return conn

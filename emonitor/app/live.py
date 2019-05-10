@@ -88,9 +88,12 @@ def plot_data():
     latest = end
     # data
     instrum = instrum_select.value
-    db = config[instrum]['db']
-    source = ColumnDataSource(get_data(db, start, end,
-                                       dropna=False, ascending=True, limit=1000))
+    db = config.get(instrum, 'db', fallback=None)
+    if db is not None:
+        source = ColumnDataSource(get_data(db, start, end,
+                                           dropna=False, ascending=True, limit=1000))
+    else:
+        source = ColumnDataSource()
     # plot
     fig = make_plot(instrum)
     curdoc().clear()
@@ -109,9 +112,10 @@ def update_data():
     latest = end
     # data
     instrum = instrum_select.value
-    db = config[instrum]['db']
-    source.data = ColumnDataSource(get_data(db, start, end,
-                                            dropna=False, ascending=True, limit=1000)).data
+    db = config.get(instrum, 'db', fallback=None)
+    if db is not None:
+        source.data = ColumnDataSource(get_data(db, start, end,
+                                                dropna=False, ascending=True, limit=1000)).data
 
 
 def stream_data():
@@ -123,16 +127,17 @@ def stream_data():
     end = datetime.datetime.now()
     # data
     instrum = instrum_select.value
-    db = config[instrum]['db']
-    new_data = get_data(db, start, end,
-                        dropna=False, ascending=True, limit=None)
-    if not isinstance(new_data, dict) and len(new_data.index) > 0:
-        new_data = ColumnDataSource(new_data).data
-        source.stream(new_data)
-        latest = end
-        logger.debug("stream new data")
-    else:
-        logger.debug("no new data")
+    db = config.get(instrum, 'db', fallback=None)
+    if db is not None:
+        new_data = get_data(db, start, end,
+                            dropna=False, ascending=True, limit=None)
+        if not isinstance(new_data, dict) and len(new_data.index) > 0:
+            new_data = ColumnDataSource(new_data).data
+            source.stream(new_data)
+            latest = end
+            logger.debug("stream new data")
+        else:
+            logger.debug("no new data")
 
 
 def refresh_plot(attr, old, new):
