@@ -8,7 +8,6 @@ import sys
 import os
 import time
 import logging
-from importlib import import_module
 from cryptography.fernet import Fernet
 from .core import (TABLE,
                    KEY_FILE)
@@ -16,38 +15,22 @@ from .tools import (db_check,
                     db_insert,
                     sql_insert,
                     get_columns,
-                    parse_settings)
+                    format_commands)
 logger = logging.getLogger(__name__)
-
-
-def get_device(settings, instrum):
-    """ get instance of device_class """
-    if "device_class" in settings:
-        device_class = settings["device_class"]
-    else:
-        if instrum in ["simulate", "fake"]:
-            device_class = "fake.Fake"
-        else:
-            device_class = "generic.Generic"
-    # serial connection
-    mod, obj = device_class.split(".")
-    module = import_module("..devices." + mod, __name__)
-    device = getattr(module, obj)(settings)
-    return device
 
 
 def run(config, instrum, wait,
         output=False, sql=False, header=True, quiet=False):
     """ run emonitor """
     tty = sys.stdout.isatty()
-    settings = parse_settings(config, instrum)
+    settings = format_commands(config.eval_settings(instrum))
     logger.info(f"start: instrum={instrum}, wait={wait}, output={output}, sql={sql}")
     logger.debug(f"{instrum} settings: {settings}")
     tcol = settings.get("tcol", "TIMESTAMP")
     columns = get_columns(settings, tcol)
     logger.debug(f"{instrum} columns: {columns}")
     try:
-        device = get_device(settings, instrum)
+        device = config.get_device(instrum)(settings)
         # sqlite output
         if output:
             db = config.sqlite_connect(instrum)

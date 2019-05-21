@@ -8,15 +8,13 @@ import os
 import glob
 import logging
 import sqlite3
-from ast import literal_eval
 from collections.abc import Iterable
 from humanize import naturalsize
 from .core import TABLE
 from .tools import (db_init,
                     db_count,
                     db_describe,
-                    get_columns,
-                    parse_settings)
+                    get_columns)
 logger = logging.getLogger(__name__)
 
 
@@ -90,15 +88,15 @@ class EmonitorData(object):
         for instrum in instruments:
             if not config.has_section(instrum):
                 raise NameError(f"{instrum} not found in config file")
-            settings = parse_settings(config, instrum)
-            tcol = settings.get("tcol", "TIMESTAMP")
+            tcol = config.get(instrum, "tcol", fallback="TIMESTAMP")
             # checks
-            assert "db" in settings, f"`db` not set for {instrum}"
-            assert "sensors" in settings, f"`sensors` not set for {instrum}"
+            assert config.has_option(instrum, "db"), f"`db` not set for {instrum}"
+            assert config.has_option(instrum, "sensors"), f"`sensors` not set for {instrum}"
             # database name
-            name = settings["db"]
+            name = config.get(instrum, "db")
             fname, _ = os.path.splitext(name)
             fname += ".db"
+            settings = config.eval_settings(instrum)
             columns = get_columns(settings, tcol=None)
             # sqlite database
             fil = os.path.join(self.dire, fname)

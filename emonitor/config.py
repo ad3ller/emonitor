@@ -9,6 +9,8 @@ import sys
 import logging
 import sqlite3
 from getpass import getpass
+from ast import literal_eval
+from importlib import import_module
 from collections.abc import Iterable
 from configparser import ConfigParser
 import pymysql
@@ -75,7 +77,7 @@ class EmonitorConfig(ConfigParser):
 
     def remove(self, instrum, force=False, write=True):
         """ remove section from the config file """
-        prompt = f"Are you sure you want to remove {instrum} (y/n) ?"
+        prompt = f"Are you sure you want to remove {instrum} from the config file (y/n) ?"
         if not self.has_section(instrum):
             if instrum == "DEFAULT":
                 raise NameError("Cannot remove DEFAULT section")
@@ -153,6 +155,52 @@ class EmonitorConfig(ConfigParser):
         with open(fil, "w+", encoding="utf8") as file_out:
             super().write(file_out)
 
+    def eval_settings(self, instrum, exclude=None):
+        """ read config section and use ast.literal_eval() to get python dtypes
+
+        args:
+            instrum           name of device
+            exclude=None      list of keys excluded from ast.literal_eval()
+
+        return:
+            settings
+        """
+        settings = dict()
+        # keys to ignore
+        if exclude is None:
+            exclude = []
+        elif isinstance(exclude, str):
+            exclude = [exclude]
+        elif isinstance(exclude, Iterable):
+            pass
+        else:
+            raise TypeError("arg `exclude` must be None, str or list")
+        # evaluate items
+        for key, value in self.items(instrum):
+            if key in exclude:
+                settings[key] = value
+            else:
+                try:
+                    settings[key] = literal_eval(value)
+                except:
+                    settings[key] = value
+        return settings
+
+    def get_device(self, instrum):
+        """ get device class """
+        if self.has_option(instrum, "device_class"):
+            device_class = self.get(instrum, "device_class")
+        else:
+            if instrum in ["simulate", "fake"]:
+                device_class = "fake.Fake"
+            else:
+                device_class = "generic.Generic"
+        # serial connection
+        mod, obj = device_class.split(".")
+        module = import_module("..devices." + mod, __name__)
+        device = getattr(module, obj)
+        return device
+
     def sqlite_connect(self, instrum):
         """ open connection to sqlite database """
         name = self.get(instrum, "db")
@@ -179,16 +227,16 @@ class EmonitorConfig(ConfigParser):
             print(f"SQL username : {sql_user}")
         # password
         if not self.has_option(instrum, "sql_passwd"):
-            sql_passwd = getpass(prompt="SQL password : ", stream=sys.stderr)
+            password = getpass(prompt="SQL password : ", stream=sys.stderr)
         elif encryption is not None:
-            sql_passwd = self.get(instrum, "sql_passwd", encryption=encryption)
+            password = self.get(instrum, "sql_passwd", encryption=encryption)
         else:
             raise ValueError("cannot decrypt sql_passwd using encryption=None")
         # connect
         conn = pymysql.connect(host=host,
                                port=port,
                                user=sql_user,
-                               password=sql_passwd,
+                               password=password,
                                database=database)
         logger.info(f"connected to SQL server: host={host}, database={database}")
         return conn

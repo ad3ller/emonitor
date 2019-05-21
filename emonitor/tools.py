@@ -6,11 +6,9 @@ Created on Sun Jan 14 21:55:57 2018
 """
 import os
 import logging
-import warnings
 import sqlite3
 import datetime
 from collections.abc import Iterable
-from ast import literal_eval
 import numpy as np
 import pandas as pd
 from .core import DATA_DIRE
@@ -45,7 +43,7 @@ def db_init(conn, table, columns, tcol="TIMESTAMP"):
         conn               connection to db
         table              name of the table
         columns            list of columns (excl. tcol)
-        
+
     kwargs:
         tcol='TIMESTAMP'   name of timestamp column
     """
@@ -101,7 +99,7 @@ def db_count(conn, table):
 
 def db_describe(conn, table):
     """ get sqlite database structure
-    
+
     args:
         conn               connection to db
         table              name of the table
@@ -160,13 +158,13 @@ def get_columns(settings, tcol="TIMESTAMP"):
     Order of preference for extracting columns from settings:
 
         1) settings['columns']
-        2) replace {sensor} in settings['column_fmt'] with 
+        2) replace {sensor} in settings['column_fmt'] with
            each of settings['sensors']
         3) settings['sensors']
-    
+
     args:
         settings           dict() of settings
-    
+
     kwargs:
         tcol='TIMESTAMP'   name of timestamp column
 
@@ -190,7 +188,7 @@ def get_columns(settings, tcol="TIMESTAMP"):
 
 def format_commands(settings):
     """ format string commands
-   
+
     Replace special characters ["$CR", "$LF", "$ACK", "$ENQ"]
     in settings['cmd', 'ack', 'enq'].
 
@@ -215,37 +213,6 @@ def format_commands(settings):
     return settings
 
 
-def parse_settings(conf, instrum, ignore=None):
-    """ read config section and use ast.literal_eval() to get python dtypes
-
-    args:
-        conf              config file
-        instrum           name of device
-
-    kwargs:
-        ignore=None       list of keys whose values won't be passed to ast.literal_eval()
-
-    return:
-        modified settings
-    """
-    settings = dict()
-    # keys to ignore
-    if ignore is None:
-        ignore = []
-    if not isinstance(ignore, Iterable):
-        ignore = [ignore]
-    # evaluate items
-    for key, value in conf.items(instrum):
-        if key in ignore:
-            settings[key] = value
-        else:
-            try:
-                settings[key] = literal_eval(value)
-            except:
-                settings[key] = value
-    return format_commands(settings)
-
-
 def history(conn, start, end, **kwargs):
     """ SELECT * FROM table WHERE tcol BETWEEN start AND end.
 
@@ -263,7 +230,7 @@ def history(conn, start, end, **kwargs):
         tcol='TIMESTAMP'         timestamp column name            str
         coerce_float=False       convert, e.g., decimal to float  bool
         dropna=True              drop NULL columns                bool
-    
+
     return:
         result         pandas.DataFrame
     """
@@ -339,7 +306,7 @@ def live(conn, delta=None, **kwargs):
         tcol='TIMESTAMP'         timestamp column name            str
         coerce_float=True        convert, e.g., decimal to float  bool
         dropna=True              drop NULL columns                bool
-    
+
     return:
         result         pandas.DataFrame
     """
