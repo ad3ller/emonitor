@@ -53,7 +53,7 @@ And finally, start the service.
 
 This queries the device for its sensor readings. Waits. And repeats.
 
-To plot the recorded data using `bokeh <https://github.com/bokeh/bokeh>`_, launch another terminal and execute:
+To plot the recorded data in a browser using `bokeh <https://github.com/bokeh/bokeh>`_, launch another terminal and execute:
 
 .. code-block:: bash
 
