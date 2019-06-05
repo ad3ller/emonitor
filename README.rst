@@ -1,7 +1,7 @@
 emonitor
 ========
 
-A command-line program for reading, recording and plotting sensor data from serial devices.
+Read, record and plot sensor data from serial devices.
 
 Designed to work with generic serial devices.  Includes example configuration for a Pfeiffer MaxiGauge vacuum pressure gauge reader and a Lakeshore Model-336 temperature controller.
 
