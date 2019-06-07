@@ -4,11 +4,13 @@ Created on Tue Apr 16 12:38:01 2019
 
 @author: Adam
 """
+import operator
 import codecs
 import re
 import logging
 from .base import SerialDevice
 logger = logging.getLogger(__name__)
+
 
 DEFAULTS = {"parity" : "O", 
             "stopbits" : 1,
@@ -21,15 +23,18 @@ class Model_336(SerialDevice):
     """ read Lakeshore Model 336 temperature sensors """
     def __init__(self, settings):
         settings = {**DEFAULTS, **settings}
-        self.set_units(settings.get("units", "K"))
+        self.units = settings.get("units", "K")
         super().__init__(settings)
- 
-    def set_units(self, unit):
-        """ update sensor units """
-        assert unit in ["C", "K"]
-        # update unit and command
-        self.unit = unit
-        self.cmd = codecs.decode(unit + "RDG?{sensor}\r\n", "unicode-escape")
+    
+    # temperature units
+    units = property(operator.attrgetter('_units'))
+
+    @units.setter
+    def units(self, value):
+        """ validate units and set serial command """
+        assert value in ["C", "K"], "valid units : 'C', 'K'"
+        self.cmd = codecs.decode(value + "RDG?{sensor}\r\n", "unicode-escape")
+        self._units = value
 
     def read_sensor(self, sensor):
         """ read sensor data """
