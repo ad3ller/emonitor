@@ -1,7 +1,7 @@
 emonitor
 ========
 
-A command-line program for reading, recording and plotting sensor data from serial devices.
+Read, record and plot sensor data from serial devices.
 
 Designed to work with generic serial devices.  Includes example configuration for a Pfeiffer MaxiGauge vacuum pressure gauge reader and a Lakeshore Model-336 temperature controller.
 
@@ -53,7 +53,7 @@ And finally, start the service.
 
 This queries the device for its sensor readings. Waits. And repeats.
 
-To plot the recorded data using `bokeh <https://github.com/bokeh/bokeh>`_, launch another terminal and execute:
+To plot the recorded data in a browser using `bokeh <https://github.com/bokeh/bokeh>`_, launch another terminal and execute:
 
 .. code-block:: bash
 
