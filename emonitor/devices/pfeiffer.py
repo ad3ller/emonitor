@@ -15,7 +15,6 @@ LF = "\x0A"
 ACK = "\x06"
 ENQ = "\x05"
 REGEX = "^0,(.*)"
-
 DEFAULTS = {"parity" : "N", 
             "stopbits" : 1,
             "bytesize" : 8,
@@ -44,13 +43,21 @@ class MaxiGauge(SerialDevice):
             # send enquiry
             self.write(bytes(ENQ + CR + LF, "utf8"))
         else:
-            raise Exception(f"read_sensor({sensor}) acknowledgement failed")
+            logger.error(f"read_sensor({sensor}) acknowledgement failed")
+            return None
         # read response
         response = self.readline()
         logger.debug(f"read_sensor({sensor}), response: {response}")
         # format
-        response = response.strip().decode("utf-8")
-        match = re.search(self.regex, response)
-        response = match.group(1)
-        logger.debug(f"read_sensor({sensor}), regex match: {response}")
-        return response
+        try:
+            response = response.strip().decode("utf-8")
+            match = re.search(self.regex, response)
+            logger.debug(f"read_sensor({sensor}), regex match: {match}")
+            response = match.group(1)
+        except AttributeError:
+            logger.error(f"read_sensor({sensor}), regex failed: {self.regex}")
+            response = None
+        except:
+            raise
+        finally:
+            return response

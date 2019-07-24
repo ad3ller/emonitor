@@ -86,11 +86,11 @@ def run(config, instrum, wait,
                             num_db_errors += 1
                             if num_db_errors == 1:
                                 # log first failure
-                                logger.warning(f"Failed to INSERT data into {db}", exc_info=True)
+                                logger.error(f"INSERT data into {db} failed", exc_info=True)
                     if sql:
                         try:
                             if not sql_conn.open:
-                                # attempt to reconnect
+                                # attempt to reconnect after 10 failures
                                 sql_conn.connect()
                             sql_insert(sql_conn, settings["sql_table"], columns, values)
                             num_sql_errors = 0
@@ -98,7 +98,7 @@ def run(config, instrum, wait,
                             num_sql_errors += 1
                             if num_sql_errors == 1:
                                 # log first failure
-                                logger.warning(f"Failed to INSERT data into SQL database",
+                                logger.error(f"INSERT data into SQL database failed",
                                                exc_info=True)
             time.sleep(wait)
     except KeyboardInterrupt:
