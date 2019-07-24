@@ -86,6 +86,8 @@ def main():
     parser_copy.set_defaults(func=config.copy, log="config")
     parser_copy.add_argument("existing", type=str, help="existing device name")
     parser_copy.add_argument("new", type=str, help="new device name")
+    parser_copy.add_argument("-d", "--defaults", action="store_true", default=False,
+                             help="include defaults")
     parser_copy.add_argument("--force", action="store_true", default=False,
                              help="ignore warnings")
     parser_copy.add_argument("--debug", action="store_true", default=False,
@@ -130,7 +132,7 @@ def main():
     parser_passwd.add_argument("instrum", type=str, default="DEFAULT",
                                help="device name [if None then DEFAULT]")
     parser_passwd.add_argument("-k", "--key", dest="option", default="sql_passwd",
-                               help="attribute key, e.g., sql_passwd")
+                               help="attribute key, e.g., sql_passwd [DEFAULT]")
     parser_passwd.add_argument("--debug", action="store_true", default=False,
                                help="enable debugging")
 

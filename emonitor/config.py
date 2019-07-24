@@ -56,8 +56,8 @@ class EmonitorConfig(ConfigParser):
             logger.info(f"new(): instrum={instrum}")
             self.write()
 
-    def copy(self, existing, new, force=False, write=True):
-        """ copy section `existing` to `new` (including defaults) """
+    def copy(self, existing, new, defaults=False, force=False, write=True):
+        """ copy section `existing` to `new` """
         if not self.has_section(existing):
             raise NameError(f"{existing} not found in config file")
         if self.has_section(new):
@@ -68,9 +68,15 @@ class EmonitorConfig(ConfigParser):
                 return
         logger.debug(f"copy(): add section {new}")
         self.add_section(new)
-        for option, value in self.items(existing):
-            logger.debug(f"copy(): instrum={new}, {option}={value}")
-            super().set(new, option, value=value)
+        if defaults:
+            for option, value in self.items(existing):
+                logger.debug(f"copy(): instrum={new}, {option}={value}")
+                super().set(new, option, value=value)
+        else:
+            for option in self._sections[existing].keys():
+                value = super().get(existing, option)
+                logger.debug(f"copy(): instrum={new}, {option}={value}")
+                super().set(new, option, value=value)
         if write:
             logger.info(f"copy(): existing={existing}, new={new}")
             self.write()
