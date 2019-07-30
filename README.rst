@@ -3,7 +3,7 @@ emonitor
 
 Read, record and plot sensor data from serial devices.
 
-Designed to work with generic serial devices.  Includes example configuration for a Pfeiffer MaxiGauge vacuum pressure gauge reader and a Lakeshore Model-336 temperature controller.
+This application can be configured to work with generic serial devices.  It includes example configuration for a Pfeiffer MaxiGauge vacuum pressure gauge reader and a Lakeshore Model-336 temperature controller.
 
 Install
 -------
