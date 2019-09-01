@@ -6,7 +6,8 @@
 Welcome to emonitor's documentation!
 ====================================
 
-``emonitor`` is a command-line program for reading and recording sensor data from serial devices.
+``emonitor`` is a command-line program for reading and recording 
+sensor data from serial devices.
 
 .. toctree::
    :maxdepth: 2

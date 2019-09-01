@@ -1,8 +1,9 @@
 Configure
 =========
 
-Communication with a serial device is configured using `~/.emonitor/instrum.ini`.  This file is also used
-to configure the recording of sensor data.
+Communication with a serial device is configured using 
+`~/.emonitor/instrum.ini`.  This file is also used to configure 
+the recording of sensor data.
 
 The configuration file can be viewed using ``emonitor config``. ::
 
@@ -11,35 +12,32 @@ The configuration file can be viewed using ``emonitor config``. ::
     sql_host = 127.0.0.1
     sql_port = 3306
     sql_db = emonitor
+    plot_height = 400
+    plot_width = 600
 
     [fake]
-    db = fake_2018
+    db = fake
     sensors = ['A', 'B', 'C']
     sql_table = fake
-    port = COM7
+    y_axis_label = Kelvin
 
     [maxigauge]
+    device_class = pfeiffer.MaxiGauge
     db = pressure
-    cmd = PR{sensor}$CR$LF
-    ack = $ACK$CR$LF
-    enq = $ENQ
     port = COM7
-    baudrate = 9600
-    stopbits = 1
-    bytesize = 8
-    parity = N
-    timeout = 1
-    regex = ,(.*)
     sensors = ['1', '2', '3', '6']
-    column_fmt = {sensor}
+    y_axis_label = mbar
+    y_axis_type = log
 
     [lakeshore336]
     device_class = lakeshore.Model_336
     db = temperature
+    y_axis_label = Kelvin
     sensors = ['A', 'B', 'C']
     port = COM8
 
-The settings in the `DEFAULT` section are shared by all of the devices.  These can be assigned using ``emonitor set``.
+The settings in the `DEFAULT` section are shared by all of the devices. 
+These can be assigned using ``emonitor set``.
 
 ::
 
@@ -63,7 +61,25 @@ or ``copy`` (see ``--help`` for options).
 serial settings
 ---------------
 
-It should be possible to configure ``emonitor`` to communicate with most serial devices using the settings listed below.  
+Classes for communicating with specific devices are accessible via the `device_class` setting.  E.g.,
+
+:device_class:
+
+    generic.Generic
+
+    pfeiffer.MaxiGauge
+
+    lakeshore.Model_336
+
+    lakeshore.Model_331
+
+These subclasses of ``serial.Serial`` have preconfigured settings and custom
+methods. To read sensor data, ``emonitor`` attempts to call 
+``emonitor/devices/[device_class].read_data(**settings)``.
+
+It should be possible to configure ``emonitor`` to communicate with most serial devices using 
+`device_class=generic.Generic` and the settings listed below. Examples for configuring generic
+devices are available in `emonitor/examples/generic.ini`.
 
 ==================  =====================================================  
 key                 description   
@@ -81,7 +97,7 @@ write_timeout       write timeout value
 inter_byte_timeout  inter-character timeout
 
 cmd                 query instrument command with `{sensor}` placeholder
-enq                 request data transmission             
+enq                 request data transmission
 ack                 positive report signal
 sensors             comma-delimited list of sensor names
 regex               regular expression to format instrument response
@@ -110,3 +126,19 @@ sql_passwd  password (encrypted)
 sql_db      name of SQL database
 sql_table   name of SQL table
 ==========  ===============================================
+
+plot settings
+--------------
+
+The bokeh server also uses `~/.emonitor/instrum.ini` to customize its plots. 
+Currently, only sqlite data can be plotted. As above, each of these settings
+can be either DEFAULT or device-specific.
+
+=============  ===============================================
+key            description   
+=============  ===============================================
+plot_height      bokeh plot height [px]
+plot_width      bokeh plot width [px]
+y_axis_label     bokeh plot y label
+y_axis_type      bokeh plot y-axis type, e.g., "linear" or "log"
+=============  ===============================================

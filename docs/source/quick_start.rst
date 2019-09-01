@@ -1,32 +1,26 @@
 Quick Start
 -----------
 
-List the configured serial devices,
+The `emonitor` commands can be executed from a terminal (or Anaconda prompt).
 
-::
+Configure the sensors for a (fake) serial device called `fake`.
 
-   $ emonitor ls
-   ['fake', 'maxigauge', 'lakeshore336']
-
-
-Set the serial port for `fake`,
-
-::
-   
-   $ emonitor set fake --key port --value COM7
-
-And specify which sensors to read,
-
-::
+.. code-block:: bash
 
     $ emonitor set fake --key sensors --value A B C
 
+Next, create an SQLite database to store the fake data.
 
-Then run ``emonitor`` for this device,
+.. code-block:: bash
 
-::
+    $ emonitor generate fake
+    Creating fake.db with columns ('A', 'B', 'C')
 
-    $ emonitor run fake --wait 10
+And finally, start the service.
+
+.. code-block:: bash
+
+    $ emonitor run fake --output --wait 10
     Starting emonitor. Use Ctrl-C to stop.
 
               TIMESTAMP            A	        B	        C
@@ -34,7 +28,12 @@ Then run ``emonitor`` for this device,
     2018-05-12 13:20:54	     292.9262	 293.5138	 293.9303
     2018-05-12 13:21:04	     293.0826	 293.3233	 294.0555
     2018-05-12 13:21:14	     293.1931	 293.4301	 294.0839
-    ^C
-    Stopping emonitor.
+
 
 This queries the device for its sensor readings. Waits. And repeats.
+
+To plot the recorded data in a browser using `bokeh <https://github.com/bokeh/bokeh>`_, launch another terminal and execute:
+
+.. code-block:: bash
+
+    $ emonitor plot --show

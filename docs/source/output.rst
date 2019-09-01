@@ -66,6 +66,8 @@ The SQLite files are stored in `~/.emonitor/data`.
 
 Enable SQLite output with ``emonitor run`` using the ``--output`` flag.
 
+See `emonitor/notebooks/SQLite data.ipynb`.
+
 SQL
 +++
 
@@ -126,3 +128,5 @@ Enable SQL output with the ``--sql`` flag.
     Do not store `sql_passwd` in the config file in plain text.  If necessary, use ``emonitor passwd``
     to save it with basic encryption.  However, be aware that anyone with access to `instrum.ini` and
     the generated `private.key`  file will be able to decrypt the password.
+
+See `emonitor/notebooks/SQL data.ipynb`.
