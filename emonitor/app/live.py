@@ -4,6 +4,7 @@ Created on Sun Apr 28 17:33:12 2019
 
 @author: Adam
 """
+import os
 import sqlite3
 import datetime
 import warnings
@@ -32,6 +33,8 @@ def get_data(db, start, end, **kwargs):
     # data
     try:
         fil = db_path(db)
+        if not os.path.isfile(fil):
+            raise OSError(f"{fil} not found")
         conn = sqlite3.connect(fil)
         df = history(conn, start, end, **kwargs)
         conn.close()
