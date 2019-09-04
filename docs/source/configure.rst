@@ -75,11 +75,11 @@ Classes for communicating with specific devices are accessible via the `device_c
 
 These subclasses of ``serial.Serial`` have preconfigured settings and custom
 methods. To read sensor data, ``emonitor`` attempts to call 
-``emonitor/devices/[device_class].read_data(**settings)``.
+``emonitor/devices/[device_class](**settings).read_data(sensors)``.
 
 It should be possible to configure ``emonitor`` to communicate with most serial devices using 
-`device_class=generic.Generic` and the settings listed below. Examples for configuring generic
-devices are available in `emonitor/examples/generic.ini`.
+`device_class=generic.Generic` and the settings listed below. Examples configurations are 
+available in `emonitor/examples/generic.ini`.
 
 ==================  =====================================================  
 key                 description   
