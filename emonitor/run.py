@@ -20,7 +20,8 @@ logger = logging.getLogger(__name__)
 
 
 def run(config, instrum, wait,
-        output=False, sql=False, header=True, quiet=False):
+        output=False, output_skip=1, sql=False, sql_skip=1,
+        header=True, quiet=False):
     """ run emonitor """
     tty = sys.stdout.isatty()
     settings = format_commands(config.eval_settings(instrum))
@@ -59,6 +60,7 @@ def run(config, instrum, wait,
                           "".join([c.rjust(str_width) for c in columns[1:]]))
         elif header:
             print(",".join(columns))
+        i = 0
         num_db_errors = 0
         num_sql_errors = 0
         # start server
@@ -78,7 +80,7 @@ def run(config, instrum, wait,
                     else:
                         val_str = tuple(str(v).replace("None", "NULL") for v in values)
                         print(",".join(val_str))
-                    if output:
+                    if output and i % output_skip == 0:
                         try:
                             db_insert(db, TABLE, columns, values)
                             num_db_errors = 0
@@ -87,7 +89,7 @@ def run(config, instrum, wait,
                             if num_db_errors == 1:
                                 # log first failure
                                 logger.error(f"INSERT data into {db} failed", exc_info=True)
-                    if sql:
+                    if sql and i % sql_skip == 0:
                         try:
                             if not sql_conn.open:
                                 # attempt to reconnect after 10 failures
@@ -101,6 +103,7 @@ def run(config, instrum, wait,
                                 logger.error(f"INSERT data into SQL database failed",
                                                exc_info=True)
             time.sleep(wait)
+            i += 1
     except KeyboardInterrupt:
         pass
     except Exception as error:

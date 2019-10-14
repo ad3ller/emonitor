@@ -207,6 +207,10 @@ def main():
                             help="no printed output")
     parser_run.add_argument("--debug", action="store_true", default=False,
                             help="enable debugging")
+    parser_run.add_argument("--output_skip", type=int, default=1,
+                            help="output every nth query (default : 1)")
+    parser_run.add_argument("--sql_skip", type=int, default=1,
+                            help="send every nth query (default : 1)")
 
     # bokeh server
     parser_plot = subparsers.add_parser("plot")
