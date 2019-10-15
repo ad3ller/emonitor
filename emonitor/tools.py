@@ -11,7 +11,7 @@ import datetime
 from collections.abc import Iterable
 import numpy as np
 import pandas as pd
-from .core import DATA_DIRE
+from .core import DATA_DIRE, TMP_DIRE
 logger = logging.getLogger(__name__)
 
 
@@ -21,7 +21,7 @@ class CausalityError(ValueError):
     pass
 
 
-def db_path(name):
+def db_path(name, live=False):
     """ build path of SQLite database file
 
     args:
@@ -31,10 +31,27 @@ def db_path(name):
         fil
     """
     fname, _ = os.path.splitext(name)
-    fname += ".db"
-    fil = os.path.join(DATA_DIRE, fname)
+    if live:
+        fname += ".live.db"
+        fil = os.path.join(TMP_DIRE, fname)
+    else:
+        fname += ".db"
+        fil = os.path.join(DATA_DIRE, fname)
     return fil
 
+
+def db_remove(conn, table):
+    """ remove SQLite table
+
+    args:
+        conn               connection to db
+        table              name of the table
+    """
+    sql = f"DROP TABLE {table};"
+    logger.debug(f"db_remove() sql: {sql}")
+    cursor = conn.cursor()
+    cursor.execute(sql)
+    cursor.close()
 
 def db_init(conn, table, columns, tcol="TIMESTAMP"):
     """ initialize SQLite database
@@ -47,10 +64,55 @@ def db_init(conn, table, columns, tcol="TIMESTAMP"):
     kwargs:
         tcol='TIMESTAMP'   name of timestamp column
     """
+    cursor = conn.cursor()
+    # initialize
     column_str = ", ".join(['`' + str(c) + '` DOUBLE DEFAULT NULL' for c in columns])
     sql = f"CREATE TABLE {table}(`{tcol}` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, {column_str});"
     logger.debug(f"db_init() sql: {sql}")
+    cursor.execute(sql)
+    cursor.close()
+
+
+def db_limit_rows(conn, table, num, tcol="TIMESTAMP"):
+    """ Add SQLite database trigger
+
+    args:
+        conn               connection to db
+        table              name of the table
+        num                max number of rows
+
+    kwargs:
+        tcol='TIMESTAMP'   name of timestamp column
+    """
     cursor = conn.cursor()
+    sql = f"""CREATE TRIGGER limit_rows INSERT ON {table}
+              BEGIN
+              DELETE FROM {table} WHERE rowid NOT IN (SELECT rowid FROM {table} ORDER BY {tcol} DESC LIMIT {num});
+              END;
+           """
+    logger.debug(f"db_limit_rows() sql: {sql}")
+    cursor.execute(sql)
+    cursor.close()
+
+
+def db_limit_time(conn, table, num, tcol="TIMESTAMP"):
+    """ Add SQLite database trigger
+
+    args:
+        conn               connection to db
+        table              name of the table
+        num                max number of days
+
+    kwargs:
+        tcol='TIMESTAMP'   name of timestamp column
+    """
+    cursor = conn.cursor()
+    sql = f"""CREATE TRIGGER limit_days INSERT ON {table}
+              BEGIN
+              DELETE FROM {table} WHERE {tcol} <= datetime('now','-{num} days', 'localtime');
+              END;
+           """
+    logger.debug(f"db_limit_days() sql: {sql}")
     cursor.execute(sql)
     cursor.close()
 

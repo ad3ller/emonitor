@@ -8,10 +8,15 @@ import sys
 import os
 import time
 import logging
+import sqlite3
 from cryptography.fernet import Fernet
 from .core import (TABLE,
                    KEY_FILE)
-from .tools import (db_check,
+from .tools import (db_path,
+                    db_init,
+                    db_limit_time,
+                    db_remove,
+                    db_check,
                     db_insert,
                     sql_insert,
                     get_columns,
@@ -20,8 +25,13 @@ logger = logging.getLogger(__name__)
 
 
 def run(config, instrum, wait,
-        output=False, output_skip=1, sql=False, sql_skip=1,
-        header=True, quiet=False):
+        live=False,
+        output=False,
+        output_skip=1,
+        sql=False,
+        sql_skip=1,
+        header=True,
+        quiet=False):
     """ run emonitor """
     tty = sys.stdout.isatty()
     settings = format_commands(config.eval_settings(instrum))
@@ -32,6 +42,21 @@ def run(config, instrum, wait,
     logger.debug(f"{instrum} columns: {columns}")
     try:
         device = config.get_device(instrum)(settings)
+        # live output
+        if live:
+            tmp_fil = db_path(instrum, live=True)
+            tmp_db = sqlite3.connect(tmp_fil)
+            try:
+                db_check(tmp_db, TABLE, columns)
+            except sqlite3.OperationalError:
+                db_init(tmp_db, TABLE, columns[1:], tcol)
+                db_limit_time(tmp_db, TABLE, 1, tcol)
+            except NameError:
+                db_remove(tmp_db, TABLE)
+                db_init(tmp_db, TABLE, columns[1:], tcol)
+                db_limit_time(tmp_db, TABLE, 1, tcol)
+            except:
+                raise
         # sqlite output
         if output:
             db = config.sqlite_connect(instrum)
@@ -61,6 +86,7 @@ def run(config, instrum, wait,
         elif header:
             print(",".join(columns))
         i = 0
+        num_live_errors = 0
         num_db_errors = 0
         num_sql_errors = 0
         # start server
@@ -80,6 +106,15 @@ def run(config, instrum, wait,
                     else:
                         val_str = tuple(str(v).replace("None", "NULL") for v in values)
                         print(",".join(val_str))
+                    if live:
+                        try:
+                            db_insert(tmp_db, TABLE, columns, values)
+                            num_live_errors = 0
+                        except:
+                            num_live_errors += 1
+                            if num_live_errors == 1:
+                                # log first failure
+                                logger.error(f"INSERT data into {tmp_db} failed", exc_info=True)
                     if output and i % output_skip == 0:
                         try:
                             db_insert(db, TABLE, columns, values)

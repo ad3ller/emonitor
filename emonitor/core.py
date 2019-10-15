@@ -7,6 +7,7 @@ Created on Mon Jan  1 21:38:13 2018
 import os
 
 USER_DIRE = os.path.join(os.path.expanduser("~"), '.emonitor')
+TMP_DIRE = os.path.join(USER_DIRE, 'tmp')
 DATA_DIRE = os.path.join(USER_DIRE, 'data')
 LOG_DIRE = os.path.join(USER_DIRE, 'logs')
 INSTRUM_FILE = os.path.join(USER_DIRE, 'instrum.ini')

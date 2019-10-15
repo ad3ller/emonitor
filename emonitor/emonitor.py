@@ -205,12 +205,15 @@ def main():
                             help="don't print header, e.g., when appending to a file")
     parser_run.add_argument("-q", "--quiet", action="store_true", default=False,
                             help="no printed output")
+    parser_run.add_argument("--live", action="store_true", default=False,
+                            help="enable live mode (temp. record of every read)")
     parser_run.add_argument("--debug", action="store_true", default=False,
                             help="enable debugging")
     parser_run.add_argument("--output_skip", type=int, default=1,
                             help="output every nth query (default : 1)")
     parser_run.add_argument("--sql_skip", type=int, default=1,
                             help="send every nth query (default : 1)")
+
 
     # bokeh server
     parser_plot = subparsers.add_parser("plot")

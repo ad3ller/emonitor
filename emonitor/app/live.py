@@ -27,14 +27,21 @@ from emonitor.config import EmonitorConfig
 COLORS = Category10[10]
 
 
-def get_data(db, start, end, **kwargs):
+def get_data(instrum, start, end, **kwargs):
     """ query sqlite database for live data
     """
     # data
     try:
-        fil = db_path(db)
-        if not os.path.isfile(fil):
-            raise OSError(f"{fil} not found")
+        # try live data first
+        fil = db_path(instrum, live=True)
+        if os.path.isfile(fil):
+            pass
+        else:
+            # fallback to output data
+            db = config.get(instrum, 'db', fallback=instrum)
+            fil = db_path(db, live=False)
+            if not os.path.isfile(fil):
+                raise OSError(f"{fil} not found")
         conn = sqlite3.connect(fil)
         df = history(conn, start, end, **kwargs)
         conn.close()
@@ -91,12 +98,8 @@ def plot_data():
     latest = end
     # data
     instrum = instrum_select.value
-    db = config.get(instrum, 'db', fallback=None)
-    if db is not None:
-        source = ColumnDataSource(get_data(db, start, end,
-                                           dropna=False, ascending=True, limit=1000))
-    else:
-        source = ColumnDataSource()
+    source = ColumnDataSource(get_data(instrum, start, end,
+                                       dropna=False, ascending=True, limit=1000))
     # plot
     fig = make_plot(instrum)
     curdoc().clear()
@@ -115,10 +118,8 @@ def update_data():
     latest = end
     # data
     instrum = instrum_select.value
-    db = config.get(instrum, 'db', fallback=None)
-    if db is not None:
-        source.data = ColumnDataSource(get_data(db, start, end,
-                                                dropna=False, ascending=True, limit=1000)).data
+    source.data = ColumnDataSource(get_data(instrum, start, end,
+                                            dropna=False, ascending=True, limit=1000)).data
 
 
 def stream_data():
@@ -130,17 +131,15 @@ def stream_data():
     end = datetime.datetime.now()
     # data
     instrum = instrum_select.value
-    db = config.get(instrum, 'db', fallback=None)
-    if db is not None:
-        new_data = get_data(db, start, end,
-                            dropna=False, ascending=True, limit=None)
-        if not isinstance(new_data, dict) and len(new_data.index) > 0:
-            new_data = ColumnDataSource(new_data).data
-            source.stream(new_data)
-            latest = end
-            logger.debug("stream new data")
-        else:
-            logger.debug("no new data")
+    new_data = get_data(instrum, start, end,
+                        dropna=False, ascending=True, limit=None)
+    if not isinstance(new_data, dict) and len(new_data.index) > 0:
+        new_data = ColumnDataSource(new_data).data
+        source.stream(new_data)
+        latest = end
+        logger.debug("stream new data")
+    else:
+        logger.debug("no new data")
 
 
 def refresh_plot(attr, old, new):

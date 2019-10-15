@@ -207,12 +207,12 @@ class EmonitorConfig(ConfigParser):
         device = getattr(module, obj)
         return device
 
-    def sqlite_connect(self, instrum):
+    def sqlite_connect(self, instrum, dire=DATA_DIRE):
         """ open connection to sqlite database """
         name = self.get(instrum, "db")
         fname, _ = os.path.splitext(name)
         fname += ".db"
-        fil = os.path.join(DATA_DIRE, fname)
+        fil = os.path.join(dire, fname)
         if not os.path.isfile(fil):
             raise OSError(f"{fname} does not exists.  Use generate or create.")
         conn = sqlite3.connect(fil)
