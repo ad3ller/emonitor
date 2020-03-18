@@ -71,7 +71,7 @@ def make_plot(instrum):
     for col in source.column_names:
         if col != tcol:
             fig.line(tcol, col,
-                     line_color=COLORS[i], legend=value(col), source=source)
+                     line_color=COLORS[i], legend_label=col, source=source)
             i += 1
 
     # format
@@ -118,8 +118,8 @@ def update_data():
     latest = end
     # data
     instrum = instrum_select.value
-    source.data = ColumnDataSource(get_data(instrum, start, end,
-                                            dropna=False, ascending=True, limit=1000)).data
+    source.data = dict(ColumnDataSource(get_data(instrum, start, end,
+                                        dropna=False, ascending=True, limit=1000)).data)
 
 
 def stream_data():
@@ -170,13 +170,14 @@ instrum_select = Select(value=instrum, options=sorted(config.instruments()))
 instrum_select.on_change('value', refresh_plot)
 
 ## live time delta
-time_slider = Slider(start=0.1, end=24, value=4, step=.1,
-                     title="time delta (hours)", callback_policy='mouseup')
+time_slider = Slider(start=0.1, end=24, value=0.1, step=.1,
+                     title="time delta (hours)")
+time_slider.on_change('value_throttled', refresh_plot)
 
 ## streaming refresh time
 stream_slider = Slider(start=1, end=60, value=10, step=1,
-                       title="refresh time (seconds)", callback_policy='mouseup')
-stream_slider.on_change('value', refresh_stream)
+                       title="refresh time (seconds)")
+stream_slider.on_change('value_throttled', refresh_stream)
 
 ## force update_data()
 update_button = Button(label="update", button_type="success")

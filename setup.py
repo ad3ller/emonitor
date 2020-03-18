@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import os
 import shutil
-VERSION = '0.1.36'
+VERSION = '0.2.0'
 MOD_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.curdir))
 EXAMPLE_INTRUM_FILE = os.path.join(MOD_PATH, 'instrum.ini')
 USER_DIRE = os.path.join(os.path.expanduser("~"), '.emonitor')
@@ -30,7 +30,7 @@ setup(name='emonitor',
       author_email='a.deller@ucl.ac.uk',
       license='BSD',
       packages = find_packages(),
-      install_requires=['pyserial>=2.7', 'humanize', 'pymysql'],
+      install_requires=['pyserial>=2.7', 'humanize', 'pymysql', 'bokeh>=2.0.0'],
       entry_points = {
         'console_scripts': ['emonitor=emonitor.emonitor:main'],
       },
