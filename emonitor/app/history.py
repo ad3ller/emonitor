@@ -16,7 +16,7 @@ from bokeh.io import curdoc
 from bokeh.layouts import row, column
 from bokeh.plotting import figure
 from bokeh.models import ColumnDataSource
-from bokeh.models.widgets import Select, Slider, Button
+from bokeh.models.widgets import Select, DatePicker, Button
 from bokeh.palettes import Category10
 # emonitor
 from emonitor.tools import db_path, history
@@ -33,16 +33,11 @@ def get_data(instrum, start, end, **kwargs):
     """
     # data
     try:
-        # try live data first
-        fil = db_path(instrum, live=True)
-        if os.path.isfile(fil):
-            pass
-        else:
-            # fallback to output data
-            db = config.get(instrum, 'db', fallback=instrum)
-            fil = db_path(db, live=False)
-            if not os.path.isfile(fil):
-                raise OSError(f"{fil} not found")
+        # output data
+        db = config.get(instrum, 'db', fallback=instrum)
+        fil = db_path(db, live=False)
+        if not os.path.isfile(fil):
+            raise OSError(f"{fil} not found")
         conn = sqlite3.connect(fil)
         df = history(conn, start, end, **kwargs)
         conn.close()
@@ -91,59 +86,26 @@ def make_plot(instrum):
 def plot_data():
     """ get_data() and make_plot()
     """
-    global instrum, latest, source, fig
+    global instrum, source, fig
     # time range
-    hours = time_slider.value
-    end = datetime.datetime.now()
-    start = end - datetime.timedelta(**{"hours": hours})
-    latest = end
+    start = datetime.datetime.strptime(start_ctrl.value + ' 00:00:00', '%Y-%m-%d %H:%M:%S')
+    end = datetime.datetime.strptime(end_ctrl.value + ' 23:59:59', '%Y-%m-%d %H:%M:%S')
     # data
     instrum = instrum_select.value
     source = ColumnDataSource(get_data(instrum, start, end,
                                        dropna=False, ascending=True, limit=MAX_ROWS))
     # plot
     fig = make_plot(instrum)
-    fig.title.text = 'live'
+    fig.title.text = 'history'
     curdoc().clear()
     curdoc().add_root(row(controls, fig))
     curdoc().title = f"{instrum}"
-
-
-def stream_data():
-    """ stream new data
-    """
-    global latest, source
-    # time range
-    start = latest
-    end = datetime.datetime.now()
-    # data
-    instrum = instrum_select.value
-    new_data = get_data(instrum, start, end,
-                        dropna=False, ascending=True, limit=None)
-    if not isinstance(new_data, dict) and len(new_data.index) > 0:
-        source.stream(new_data, rollover=MAX_ROWS)
-        latest = end
-        logger.debug("stream new data")
-    else:
-        logger.debug("no new data")
 
 
 def refresh_plot(attr, old, new):
     """ event triggered plot_data() call
     """
     plot_data()
-
-
-def refresh_stream(attr, old, new):
-    """ event triggered configure streaming
-    """
-    global stream
-    try:
-        curdoc().remove_periodic_callback(stream)
-    except:
-        pass
-    if stream_slider.value > 0:
-        stream = curdoc().add_periodic_callback(stream_data, stream_slider.value * 1000)
 
 
 # default values
@@ -155,25 +117,20 @@ instrum = config.instruments()[0]
 instrum_select = Select(title='table', value=instrum, options=sorted(config.instruments()))
 instrum_select.on_change('value', refresh_plot)
 
-## live time delta
-time_slider = Slider(start=0.1, end=24, value=4, step=.1,
-                     title="time delta (hours)")
-time_slider.on_change('value_throttled', refresh_plot)
+## start time delta
+start_ctrl = DatePicker(title='start', min_date=datetime.date(2017, 1, 1), max_date=datetime.date.today(),
+                        value=datetime.date.today() - datetime.timedelta(days=7))
+start_ctrl.on_change('value', refresh_plot)
 
-## streaming refresh time
-stream_slider = Slider(start=1, end=60, value=10, step=1,
-                       title="refresh (seconds)")
-stream_slider.on_change('value_throttled', refresh_stream)
+end_ctrl = DatePicker(title='end', min_date=datetime.date(2017, 1, 1), max_date=datetime.date.today(),
+                      value=datetime.date.today())
+end_ctrl.on_change('value', refresh_plot)
 
 ## force update_data()
 update_button = Button(label="refresh", button_type="success")
 update_button.on_click(plot_data)
 
-controls = column(instrum_select, time_slider, stream_slider, update_button)
+controls = column(instrum_select, start_ctrl, end_ctrl, update_button)
 
 # plot
 plot_data()
-stream = curdoc().add_periodic_callback(stream_data, stream_slider.value * 1000)
-
-# periodically refresh plot
-timeout = curdoc().add_periodic_callback(plot_data, 1024 * 1000)
