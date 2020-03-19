@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 # ploting
 from bokeh.core.properties import value
 from bokeh.io import curdoc
+from bokeh.models.callbacks import CustomJS
 from bokeh.layouts import row, column
 from bokeh.plotting import figure
 from bokeh.models import ColumnDataSource
@@ -99,7 +100,6 @@ def plot_data():
                                        dropna=False, ascending=True, limit=MAX_ROWS))
     # plot
     fig = make_plot(instrum)
-    fig.title.text = 'history'
     curdoc().clear()
     curdoc().add_root(row(controls, fig))
     curdoc().title = f"{instrum}"
@@ -140,14 +140,19 @@ end_minute = select = Select(title='min', value="59", options=minutes, width=70)
 end_hour.on_change('value', refresh_plot)
 end_minute.on_change('value', refresh_plot)
 
-## force update_data()
-update_button = Button(width=280, margin=[15, 10, 15, 10], label="replot", button_type="success")
-update_button.on_click(plot_data)
+## live button
+live_button = Button(width=130, margin=[15, 10, 15, 10], label="live", button_type="default")
+live_button.js_on_click(CustomJS(code=""" window.location.href='./live'; """))
 
-controls = column(instrum_select,
+## force update_data()
+history_button = Button(width=130, margin=[15, 10, 15, 10], label="history", button_type="primary")
+history_button.on_click(plot_data)
+
+controls = column(row(live_button, history_button),
+                  instrum_select,
                   row(start_date, start_hour, start_minute),
-                  row(end_date, end_hour, end_minute),
-                  update_button)
+                  row(end_date, end_hour, end_minute)
+                  )
 
 # plot
 plot_data()

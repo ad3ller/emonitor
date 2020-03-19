@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 # ploting
 from bokeh.core.properties import value
 from bokeh.io import curdoc
+from bokeh.models.callbacks import CustomJS
 from bokeh.layouts import row, column
 from bokeh.plotting import figure
 from bokeh.models import ColumnDataSource
@@ -103,7 +104,6 @@ def plot_data():
                                        dropna=False, ascending=True, limit=MAX_ROWS))
     # plot
     fig = make_plot(instrum)
-    fig.title.text = 'live'
     curdoc().clear()
     curdoc().add_root(row(controls, fig))
     curdoc().title = f"{instrum}"
@@ -166,10 +166,16 @@ stream_slider = Slider(start=1, end=60, value=10, step=1,
 stream_slider.on_change('value_throttled', refresh_stream)
 
 ## force update_data()
-update_button = Button(width=280, margin=[15, 10, 15, 10], label="refresh", button_type="success")
-update_button.on_click(plot_data)
+live_button = Button(width=130, margin=[15, 10, 15, 10], label="live", button_type="primary")
+live_button.on_click(plot_data)
 
-controls = column(instrum_select, time_slider, stream_slider, update_button)
+history_button = Button(width=130, margin=[15, 10, 15, 10], label="history", button_type="default")
+history_button.js_on_click(CustomJS(code=""" window.location.href='./history'; """))
+
+controls = column(row(live_button, history_button),
+                  instrum_select,
+                  time_slider,
+                  stream_slider)
 
 # plot
 plot_data()
