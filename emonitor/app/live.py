@@ -152,7 +152,7 @@ instrum = config.instruments()[0]
 
 # controls
 ## instrument
-instrum_select = Select(title='table', value=instrum, options=sorted(config.instruments()))
+instrum_select = Select(width=300, title='table', value=instrum, options=sorted(config.instruments()))
 instrum_select.on_change('value', refresh_plot)
 
 ## live time delta
@@ -166,7 +166,7 @@ stream_slider = Slider(start=1, end=60, value=10, step=1,
 stream_slider.on_change('value_throttled', refresh_stream)
 
 ## force update_data()
-update_button = Button(label="refresh", button_type="success")
+update_button = Button(width=280, margin=[15, 10, 15, 10], label="refresh", button_type="success")
 update_button.on_click(plot_data)
 
 controls = column(instrum_select, time_slider, stream_slider, update_button)

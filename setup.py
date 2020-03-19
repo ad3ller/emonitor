@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import os
 import shutil
-VERSION = '0.2.1'
+VERSION = '0.2.2'
 MOD_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.curdir))
 EXAMPLE_INTRUM_FILE = os.path.join(MOD_PATH, 'instrum.ini')
 USER_DIRE = os.path.join(os.path.expanduser("~"), '.emonitor')
@@ -27,7 +27,6 @@ setup(name='emonitor',
       description='record sensor data',
       url='',
       author='Adam Deller',
-      author_email='a.deller@ucl.ac.uk',
       license='BSD',
       packages = find_packages(),
       install_requires=['pyserial>=2.7', 'humanize', 'pymysql', 'bokeh>=2.0.0'],

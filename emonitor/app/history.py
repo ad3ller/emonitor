@@ -88,8 +88,11 @@ def plot_data():
     """
     global instrum, source, fig
     # time range
-    start = datetime.datetime.strptime(start_ctrl.value + ' 00:00:00', '%Y-%m-%d %H:%M:%S')
-    end = datetime.datetime.strptime(end_ctrl.value + ' 23:59:59', '%Y-%m-%d %H:%M:%S')
+    start_str = f"{start_date.value} {start_hour.value}:{start_minute.value}"
+    start = datetime.datetime.strptime(start_str, '%Y-%m-%d %H:%M')
+    
+    end_str = f"{end_date.value} {end_hour.value}:{end_minute.value}"
+    end = datetime.datetime.strptime(end_str, '%Y-%m-%d %H:%M')
     # data
     instrum = instrum_select.value
     source = ColumnDataSource(get_data(instrum, start, end,
@@ -108,29 +111,43 @@ def refresh_plot(attr, old, new):
     plot_data()
 
 
+hours = ["{:02d}".format(h) for h in range(24)]
+minutes = ["{:02d}".format(m) for m in range(60)]
+
 # default values
 config = EmonitorConfig(INSTRUM_FILE)
 instrum = config.instruments()[0]
 
 # controls
 ## instrument
-instrum_select = Select(title='table', value=instrum, options=sorted(config.instruments()))
+instrum_select = Select(width=300, title='table', value=instrum, options=sorted(config.instruments()))
 instrum_select.on_change('value', refresh_plot)
 
 ## start time delta
-start_ctrl = DatePicker(title='start', min_date=datetime.date(2017, 1, 1), max_date=datetime.date.today(),
+start_date = DatePicker(title='start', width=140, min_date=datetime.date(2017, 1, 1), max_date=datetime.date.today(),
                         value=datetime.date.today() - datetime.timedelta(days=7))
-start_ctrl.on_change('value', refresh_plot)
+start_hour = select = Select(title='hour', value="0", options=hours, width=70)
+start_minute = select = Select(title='min', value="0", options=minutes, width=70)
+start_date.on_change('value', refresh_plot)
+start_hour.on_change('value', refresh_plot)
+start_minute.on_change('value', refresh_plot)
 
-end_ctrl = DatePicker(title='end', min_date=datetime.date(2017, 1, 1), max_date=datetime.date.today(),
+end_date = DatePicker(title='end', width=140, min_date=datetime.date(2017, 1, 1), max_date=datetime.date.today(),
                       value=datetime.date.today())
-end_ctrl.on_change('value', refresh_plot)
+end_date.on_change('value', refresh_plot)
+end_hour = select = Select(title='hour', value="23", options=hours, width=70)
+end_minute = select = Select(title='min', value="59", options=minutes, width=70)
+end_hour.on_change('value', refresh_plot)
+end_minute.on_change('value', refresh_plot)
 
 ## force update_data()
-update_button = Button(label="refresh", button_type="success")
+update_button = Button(width=280, margin=[15, 10, 15, 10], label="replot", button_type="success")
 update_button.on_click(plot_data)
 
-controls = column(instrum_select, start_ctrl, end_ctrl, update_button)
+controls = column(instrum_select,
+                  row(start_date, start_hour, start_minute),
+                  row(end_date, end_hour, end_minute),
+                  update_button)
 
 # plot
 plot_data()
