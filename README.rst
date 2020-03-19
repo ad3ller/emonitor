@@ -60,6 +60,9 @@ To plot the recorded data in a browser using `bokeh <https://github.com/bokeh/bo
     $ emonitor plot --show
 
 
+.. image:: docs/source/images/app.png
+   :width: 400
+
 Documentation
 -------------
 

@@ -20,7 +20,7 @@ And finally, start the service.
 
 .. code-block:: bash
 
-    $ emonitor run fake --output --wait 10
+    $ emonitor run fake --live --output --wait 10
     Starting emonitor. Use Ctrl-C to stop.
 
               TIMESTAMP            A	        B	        C
@@ -37,3 +37,7 @@ To plot the recorded data in a browser using `bokeh <https://github.com/bokeh/bo
 .. code-block:: bash
 
     $ emonitor plot --show
+
+
+.. image:: images/app.png
+   :width: 400
