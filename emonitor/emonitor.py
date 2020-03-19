@@ -129,7 +129,7 @@ def main():
     # set encrypted
     parser_passwd = subparsers.add_parser("passwd")
     parser_passwd.set_defaults(func=config.set, log="config", value=None, encryption=fernet_key(KEY_FILE))
-    parser_passwd.add_argument("instrum", type=str, default="DEFAULT",
+    parser_passwd.add_argument("instrum", type=str, nargs="?", default="DEFAULT",
                                help="device name [if None then DEFAULT]")
     parser_passwd.add_argument("-k", "--key", dest="option", default="sql_passwd",
                                help="attribute key, e.g., sql_passwd [DEFAULT]")
