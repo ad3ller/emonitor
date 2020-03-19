@@ -61,7 +61,7 @@ To plot the recorded data in a browser using `bokeh <https://github.com/bokeh/bo
 
 
 .. image:: docs/source/images/app.png
-   :width: 400
+   :width: 300
 
 Documentation
 -------------
