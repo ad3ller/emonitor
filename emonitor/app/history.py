@@ -7,6 +7,7 @@ Created on Sun Apr 28 17:33:12 2019
 import os
 import sqlite3
 import datetime
+import pytz
 import warnings
 import logging
 logger = logging.getLogger(__name__)
@@ -17,7 +18,7 @@ from bokeh.models.callbacks import CustomJS
 from bokeh.layouts import row, column
 from bokeh.plotting import figure
 from bokeh.models import ColumnDataSource
-from bokeh.models.widgets import Select, DatePicker, Button
+from bokeh.models.widgets import Select, DatePicker, Button, Paragraph
 from bokeh.palettes import Category10
 # emonitor
 from emonitor.tools import db_path, history
@@ -27,6 +28,7 @@ from emonitor.config import EmonitorConfig
 
 COLORS = Category10[10]
 MAX_ROWS = 1000
+LOCAL_TIMEZONE = datetime.datetime.now().astimezone().tzname()
 
 
 def get_data(instrum, start, end, **kwargs):
@@ -42,6 +44,7 @@ def get_data(instrum, start, end, **kwargs):
         conn = sqlite3.connect(fil)
         df = history(conn, start, end, **kwargs)
         conn.close()
+        df.index = df.index.tz_localize(None)
     except:
         df = {}
     finally:
@@ -87,17 +90,22 @@ def make_plot(instrum):
 def plot_data():
     """ get_data() and make_plot()
     """
-    global instrum, source, fig
+    global instrum, timezone, source, fig
     # time range
     start_str = f"{start_date.value} {start_hour.value}:{start_minute.value}"
     start = datetime.datetime.strptime(start_str, '%Y-%m-%d %H:%M')
-    
+    logging.debug(f'start: {start}')
+
     end_str = f"{end_date.value} {end_hour.value}:{end_minute.value}"
     end = datetime.datetime.strptime(end_str, '%Y-%m-%d %H:%M')
+    logging.debug(f'end: {end}')
     # data
     instrum = instrum_select.value
     source = ColumnDataSource(get_data(instrum, start, end,
-                                       dropna=False, ascending=True, limit=MAX_ROWS))
+                                       dropna=False,
+                                       ascending=True,
+                                       tz=timezone,
+                                       limit=MAX_ROWS))
     # plot
     fig = make_plot(instrum)
     curdoc().clear()
@@ -117,6 +125,9 @@ minutes = ["{:02d}".format(m) for m in range(60)]
 # default values
 config = EmonitorConfig(INSTRUM_FILE)
 instrum = config.instruments()[0]
+timezone = config.get(instrum, 'plot_timezone', fallback=LOCAL_TIMEZONE)
+logger.debug("timezone: " + timezone)
+today = datetime.datetime.now(tz=pytz.timezone(timezone)).date()
 
 # controls
 ## instrument
@@ -124,16 +135,20 @@ instrum_select = Select(width=300, title='table', value=instrum, options=sorted(
 instrum_select.on_change('value', refresh_plot)
 
 ## start time delta
-start_date = DatePicker(title='start', width=140, min_date=datetime.date(2017, 1, 1), max_date=datetime.date.today(),
-                        value=datetime.date.today() - datetime.timedelta(days=7))
+start_date = DatePicker(title='start', width=140, 
+                        min_date=datetime.date(2020, 1, 1), 
+                        max_date=today,
+                        value=today - datetime.timedelta(days=7))
 start_hour = select = Select(title='hour', value="0", options=hours, width=70)
 start_minute = select = Select(title='min', value="0", options=minutes, width=70)
 start_date.on_change('value', refresh_plot)
 start_hour.on_change('value', refresh_plot)
 start_minute.on_change('value', refresh_plot)
 
-end_date = DatePicker(title='end', width=140, min_date=datetime.date(2017, 1, 1), max_date=datetime.date.today(),
-                      value=datetime.date.today())
+end_date = DatePicker(title='end', width=140, 
+                      min_date=datetime.date(2020, 1, 1),
+                      max_date=today,
+                      value=today)
 end_date.on_change('value', refresh_plot)
 end_hour = select = Select(title='hour', value="23", options=hours, width=70)
 end_minute = select = Select(title='min', value="59", options=minutes, width=70)
@@ -148,11 +163,13 @@ live_button.js_on_click(CustomJS(code=""" window.location.href='./live'; """))
 history_button = Button(width=130, margin=[15, 10, 15, 10], label="history", button_type="primary")
 history_button.on_click(plot_data)
 
+tz_text = Paragraph(text=f"timezone: {timezone}", width=350)
+
 controls = column(row(live_button, history_button),
                   instrum_select,
                   row(start_date, start_hour, start_minute),
-                  row(end_date, end_hour, end_minute)
-                  )
+                  row(end_date, end_hour, end_minute),
+                  tz_text)
 
 # plot
 plot_data()

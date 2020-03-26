@@ -40,4 +40,4 @@ To plot the recorded data in a browser using `bokeh <https://github.com/bokeh/bo
 
 
 .. image:: images/app.png
-   :width: 400
+   :width: 600

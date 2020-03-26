@@ -67,3 +67,9 @@ Documentation
 -------------
 
 A guide to using ``emonitor`` is hosted on `emonitor.readthedocs.io <https://emonitor.readthedocs.io>`_.
+
+
+Change log
+----------
+
+- v0.3.0, UTC timestamps (data taken before v0.3.0 should be adjusted to UTC for accurate plotting).

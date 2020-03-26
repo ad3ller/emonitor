@@ -8,6 +8,7 @@ import os
 import logging
 import sqlite3
 import datetime
+import pytz
 from collections.abc import Iterable
 import numpy as np
 import pandas as pd
@@ -109,7 +110,7 @@ def db_limit_time(conn, table, num, tcol="TIMESTAMP"):
     cursor = conn.cursor()
     sql = f"""CREATE TRIGGER limit_days INSERT ON {table}
               BEGIN
-              DELETE FROM {table} WHERE {tcol} <= datetime('now','-{num} days', 'localtime');
+              DELETE FROM {table} WHERE {tcol} <= datetime('now','-{num} days', 'UTC');
               END;
            """
     logger.debug(f"db_limit_days() sql: {sql}")
@@ -281,17 +282,23 @@ def history(conn, start, end, **kwargs):
     If start and end are more than 24 hours apart, then a random
     sample of length specified by 'limit' is returned.
 
+    data is assumed to be stored in with UTC timestamps
+
+    unaware datetimes for args start / end default to UTC unless tz is set
+
     args:
         conn          database connection           object
-        start         query start time              datetime.datetime / tuple / dict
-        end           query end time                datetime.datetime / tuple / dict
+        start         query start time              datetime.datetime / tuple / dict / str
+        end           query end time                datetime.datetime / tuple / dict / str
+                                                    expected format: '%Y-%m-%d %H:%M:%S'
 
     kwargs:
-        table='data'             name of table in database        str
-        limit=6000               max number of rows               int or None
-        tcol='TIMESTAMP'         timestamp column name            str
-        coerce_float=False       convert, e.g., decimal to float  bool
-        dropna=True              drop NULL columns                bool
+        table='data'             name of table in database           str
+        limit=6000               max number of rows                  int or None
+        tcol='TIMESTAMP'         timestamp column name               str
+        tz=None                  timezone for start / end and data   str or None (e.g, 'CET')
+        coerce_float=False       convert, e.g., decimal to float     bool
+        dropna=True              drop NULL columns                   bool
 
     return:
         result         pandas.DataFrame
@@ -300,27 +307,41 @@ def history(conn, start, end, **kwargs):
     table = kwargs.get('table', 'data')
     limit = kwargs.get('limit', 6000)
     tcol = kwargs.get('tcol', 'TIMESTAMP')
+    tz = kwargs.get('tz', None)
     coerce_float = kwargs.get('coerce_float', False)
     dropna = kwargs.get('dropna', True)
     ascending = kwargs.get('ascending', True)
     # start
     if isinstance(start, datetime.datetime):
-        pass
+        if start.tzinfo is not None:
+            start = start.astimezone(pytz.utc)
     elif isinstance(start, tuple):
         start = datetime.datetime(*start)
     elif isinstance(start, dict):
         start = datetime.datetime(**start)
+    elif isinstance(start, str):
+        start = datetime.datetime.strptime(start, '%Y-%m-%d %H:%M:%S')
     else:
-        raise TypeError("type(start) must be in [datetime.dateime, tuple, dict].")
+        raise TypeError("type(start) must be in [datetime.dateime, tuple, dict, str].")
     # end
     if isinstance(end, datetime.datetime):
-        pass
+        if end.tzinfo is not None:
+            end = end.astimezone(pytz.utc)
     elif isinstance(end, tuple):
         end = datetime.datetime(*end)
-    elif isinstance(start, dict):
+    elif isinstance(end, dict):
         end = datetime.datetime(**end)
+    elif isinstance(end, str):
+        end = datetime.datetime.strptime(end, '%Y-%m-%d %H:%M:%S')
     else:
-        raise TypeError("type(end) must be in [datetime.dateime, tuple, dict].")
+        raise TypeError("type(end) must be in [datetime.dateime, tuple, dict, str].")
+    # set timezone
+    if tz is not None:
+        timezone = pytz.timezone(tz)
+        if start.tzinfo is None:
+            start = timezone.localize(start).astimezone(pytz.utc)
+        if end.tzinfo is None:
+            end = timezone.localize(end).astimezone(pytz.utc)
     # check times
     if end < start:
         raise CausalityError('end before start')
@@ -338,7 +359,7 @@ def history(conn, start, end, **kwargs):
         reorder = True
         sql = f"SELECT * FROM `{table}` WHERE `{tcol}` BETWEEN '{start}' AND '{end}' ORDER BY {rand} LIMIT {limit};"
     logger.debug(f"history() sql: {sql}")
-    result = pd.read_sql_query(sql, conn, coerce_float=coerce_float, parse_dates=[tcol])
+    result = pd.read_sql_query(sql, conn, coerce_float=coerce_float, parse_dates={tcol:{'utc':True}})
     if len(result.index) > 0:
         logger.debug(f"history() num_rows: {len(result.index)}")
         result.replace("NULL", np.nan, inplace=True)
@@ -348,6 +369,8 @@ def history(conn, start, end, **kwargs):
         if reorder or not ascending:
             # sort data by timestamp
             result = result.sort_values(by=tcol, ascending=ascending)
+        if tz is not None:
+            result[tcol] = result[tcol].dt.tz_convert(tz)
         result = result.set_index(tcol)
     return result
 
@@ -366,6 +389,7 @@ def live(conn, delta=None, **kwargs):
         table='data'             name of table in database        str
         limit=6000               max number of rows               int or None
         tcol='TIMESTAMP'         timestamp column name            str
+        tz=None                  timezone
         coerce_float=True        convert, e.g., decimal to float  bool
         dropna=True              drop NULL columns                bool
 
@@ -380,6 +404,6 @@ def live(conn, delta=None, **kwargs):
         delta = datetime.timedelta(**delta)
     else:
         raise TypeError("type(delta) must be in [datetime.timedelta, dict].")
-    end = datetime.datetime.now()
+    end = datetime.datetime.now(tz=pytz.utc)
     start = end - delta
     return history(conn, start, end, **kwargs)

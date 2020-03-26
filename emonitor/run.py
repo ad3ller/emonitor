@@ -7,6 +7,8 @@ Created on Sat Dec 23 13:43:09 2017
 import sys
 import os
 import time
+import datetime
+import pytz
 import logging
 import sqlite3
 from cryptography.fernet import Fernet
@@ -98,17 +100,20 @@ def run(config, instrum, wait,
                 is_null = all([v is None for v in values])
                 ## output
                 if not is_null:
-                    values = (time.strftime("%Y-%m-%d %H:%M:%S"), ) + values
+                    timestamp = datetime.datetime.now(tz=pytz.utc)
+                    utc_values = (timestamp.strftime("%Y-%m-%d %H:%M:%S"),) + values
+                    local = timestamp.astimezone()
+                    local_values = (local.strftime("%Y-%m-%d %H:%M:%S"),) + values
                     if tty:
                         if not quiet:
-                            val_str = tuple(str(v).replace("None", "NULL").rjust(str_width) for v in values)
+                            val_str = tuple(str(v).replace("None", "NULL").rjust(str_width) for v in local_values)
                             print("".join(val_str))
                     else:
-                        val_str = tuple(str(v).replace("None", "NULL") for v in values)
+                        val_str = tuple(str(v).replace("None", "NULL") for v in local_values)
                         print(",".join(val_str))
                     if live:
                         try:
-                            db_insert(tmp_db, TABLE, columns, values)
+                            db_insert(tmp_db, TABLE, columns, utc_values)
                             num_live_errors = 0
                         except:
                             num_live_errors += 1
@@ -117,7 +122,7 @@ def run(config, instrum, wait,
                                 logger.error(f"INSERT data into {tmp_db} failed", exc_info=True)
                     if output and i % output_skip == 0:
                         try:
-                            db_insert(db, TABLE, columns, values)
+                            db_insert(db, TABLE, columns, utc_values)
                             num_db_errors = 0
                         except:
                             num_db_errors += 1
@@ -129,7 +134,7 @@ def run(config, instrum, wait,
                             if not sql_conn.open:
                                 # attempt to reconnect after 10 failures
                                 sql_conn.connect()
-                            sql_insert(sql_conn, settings["sql_table"], columns, values)
+                            sql_insert(sql_conn, settings["sql_table"], columns, utc_values)
                             num_sql_errors = 0
                         except:
                             num_sql_errors += 1

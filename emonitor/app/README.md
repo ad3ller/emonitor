@@ -6,4 +6,8 @@ To run the script, execute:
 
 Or alternatively:
 
-    bokeh serve --show app/live.py
+    bokeh serve --show app/live.
+    
+## Notes
+
+v0.3.0+ timezone adjustment for UTC data.
