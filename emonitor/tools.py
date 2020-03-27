@@ -290,7 +290,7 @@ def history(conn, start, end, **kwargs):
         conn          database connection           object
         start         query start time              datetime.datetime / tuple / dict / str
         end           query end time                datetime.datetime / tuple / dict / str
-                                                    expected format: '%Y-%m-%d %H:%M:%S'
+                                                    str format: '%Y-%m-%d %H:%M:%S'
 
     kwargs:
         table='data'             name of table in database           str

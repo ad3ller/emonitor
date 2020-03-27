@@ -28,7 +28,6 @@ from emonitor.config import EmonitorConfig
 
 COLORS = Category10[10]
 MAX_ROWS = 1000
-LOCAL_TIMEZONE = datetime.datetime.now().astimezone().tzname()
 
 
 def get_data(instrum, start, end, **kwargs):
@@ -44,6 +43,7 @@ def get_data(instrum, start, end, **kwargs):
         conn = sqlite3.connect(fil)
         df = history(conn, start, end, **kwargs)
         conn.close()
+        # localize timestamps for plotting
         df.index = df.index.tz_localize(None)
     except:
         df = {}
@@ -125,7 +125,7 @@ minutes = ["{:02d}".format(m) for m in range(60)]
 # default values
 config = EmonitorConfig(INSTRUM_FILE)
 instrum = config.instruments()[0]
-timezone = config.get(instrum, 'plot_timezone', fallback=LOCAL_TIMEZONE)
+timezone = config.get(instrum, 'plot_timezone', fallback='UTC')
 logger.debug("timezone: " + timezone)
 today = datetime.datetime.now(tz=pytz.timezone(timezone)).date()
 
@@ -163,7 +163,7 @@ live_button.js_on_click(CustomJS(code=""" window.location.href='./live'; """))
 history_button = Button(width=130, margin=[15, 10, 15, 10], label="history", button_type="primary")
 history_button.on_click(plot_data)
 
-tz_text = Paragraph(text=f"timezone: {timezone}", width=350)
+tz_text = Paragraph(text=f"timezone: {timezone}", width=340)
 
 controls = column(row(live_button, history_button),
                   instrum_select,

@@ -72,4 +72,4 @@ A guide to using ``emonitor`` is hosted on `emonitor.readthedocs.io <https://emo
 Change log
 ----------
 
-- v0.3.0, UTC timestamps (data taken before v0.3.0 should be adjusted to UTC for accurate plotting).
+- v0.3.0, record UTC timestamps (data taken before v0.3.0 should be adjusted to UTC for accurate plotting).

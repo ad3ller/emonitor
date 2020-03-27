@@ -139,6 +139,8 @@ key            description
 =============  ===============================================
 plot_height      bokeh plot height [px]
 plot_width      bokeh plot width [px]
+plot_timezone    bokeh plot x-axis timezone.
+                 E.g., 'Europe/Berlin'. See pytz.all_timezones
 y_axis_label     bokeh plot y label
 y_axis_type      bokeh plot y-axis type, e.g., "linear" or "log"
 =============  ===============================================
