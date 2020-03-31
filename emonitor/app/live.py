@@ -133,7 +133,7 @@ def stream_data():
                         dropna=False,
                         ascending=True,
                         tz=timezone,
-                        limit=MAX_ROWS)
+                        limit=None)
     if not isinstance(new_data, dict) and len(new_data.index) > 0:
         source.stream(new_data, rollover=MAX_ROWS)
         latest = end

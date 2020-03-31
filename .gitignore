@@ -110,3 +110,6 @@ ENV/
 
 # key
 private.key
+
+# local config
+*.local
