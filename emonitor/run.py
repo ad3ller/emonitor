@@ -23,7 +23,10 @@ from .tools import (db_path,
                     sql_insert,
                     get_columns,
                     format_commands)
+
+
 logger = logging.getLogger(__name__)
+COLUMN_WIDTH = 16
 
 
 def run(config, instrum, wait,
@@ -40,7 +43,8 @@ def run(config, instrum, wait,
     logger.info(f"start: instrum={instrum}, wait={wait}, output={output}, sql={sql}")
     logger.debug(f"{instrum} settings: {settings}")
     tcol = settings.get("tcol", "TIMESTAMP")
-    columns = get_columns(settings, tcol)
+    columns = get_columns(settings)
+    column_names = (tcol,) + columns
     logger.debug(f"{instrum} columns: {columns}")
     try:
         device = config.get_device(instrum)(settings)
@@ -49,20 +53,20 @@ def run(config, instrum, wait,
             tmp_fil = db_path(instrum, live=True)
             tmp_db = sqlite3.connect(tmp_fil)
             try:
-                db_check(tmp_db, TABLE, columns)
+                db_check(tmp_db, TABLE, column_names)
             except sqlite3.OperationalError:
-                db_init(tmp_db, TABLE, columns[1:], tcol)
+                db_init(tmp_db, TABLE, columns, tcol)
                 db_limit_time(tmp_db, TABLE, 1, tcol)
             except NameError:
                 db_remove(tmp_db, TABLE)
-                db_init(tmp_db, TABLE, columns[1:], tcol)
+                db_init(tmp_db, TABLE, columns, tcol)
                 db_limit_time(tmp_db, TABLE, 1, tcol)
             except:
                 raise
         # sqlite output
         if output:
             db = config.sqlite_connect(instrum)
-            db_check(db, TABLE, columns)
+            db_check(db, TABLE, column_names)
         else:
             db = None
         # sql output
@@ -82,11 +86,9 @@ def run(config, instrum, wait,
             if not quiet:
                 print("Starting emonitor. Use Ctrl-C to stop. \n")
                 if header:
-                    str_width = 16
-                    print(columns[0].rjust(19) +
-                          "".join([c.rjust(str_width) for c in columns[1:]]))
+                    print(tcol.rjust(19), "".join([c.rjust(COLUMN_WIDTH) for c in columns]))
         elif header:
-            print(",".join(columns))
+            print(",".join(column_names))
         i = 0
         num_live_errors = 0
         num_db_errors = 0
@@ -100,20 +102,18 @@ def run(config, instrum, wait,
                 is_null = all([v is None for v in values])
                 ## output
                 if not is_null:
-                    timestamp = datetime.datetime.now(tz=pytz.utc)
-                    utc_values = (timestamp.strftime("%Y-%m-%d %H:%M:%S"),) + values
-                    local = timestamp.astimezone()
-                    local_values = (local.strftime("%Y-%m-%d %H:%M:%S"),) + values
+                    local_time = datetime.datetime.now()
+                    local_values = (local_time.strftime("%Y-%m-%d %H:%M:%S "),) + values
                     if tty:
                         if not quiet:
-                            val_str = tuple(str(v).replace("None", "NULL").rjust(str_width) for v in local_values)
+                            val_str = tuple(str(v).replace("None", "NULL").rjust(COLUMN_WIDTH) for v in local_values)
                             print("".join(val_str))
                     else:
                         val_str = tuple(str(v).replace("None", "NULL") for v in local_values)
                         print(",".join(val_str))
                     if live:
                         try:
-                            db_insert(tmp_db, TABLE, columns, utc_values)
+                            db_insert(tmp_db, TABLE, columns, values)
                             num_live_errors = 0
                         except:
                             num_live_errors += 1
@@ -122,7 +122,7 @@ def run(config, instrum, wait,
                                 logger.error(f"INSERT data into {tmp_db} failed", exc_info=True)
                     if output and i % output_skip == 0:
                         try:
-                            db_insert(db, TABLE, columns, utc_values)
+                            db_insert(db, TABLE, columns, values)
                             num_db_errors = 0
                         except:
                             num_db_errors += 1
@@ -134,7 +134,7 @@ def run(config, instrum, wait,
                             if not sql_conn.open:
                                 # attempt to reconnect after 10 failures
                                 sql_conn.connect()
-                            sql_insert(sql_conn, settings["sql_table"], columns, utc_values)
+                            sql_insert(sql_conn, settings["sql_table"], columns, values)
                             num_sql_errors = 0
                         except:
                             num_sql_errors += 1

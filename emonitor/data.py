@@ -97,7 +97,7 @@ class EmonitorData(object):
             fname, _ = os.path.splitext(name)
             fname += ".db"
             settings = config.eval_settings(instrum)
-            columns = get_columns(settings, tcol=None)
+            columns = get_columns(settings)
             # sqlite database
             fil = os.path.join(self.dire, fname)
             ## check existing

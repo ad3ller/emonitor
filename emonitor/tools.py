@@ -118,13 +118,13 @@ def db_limit_time(conn, table, num, tcol="TIMESTAMP"):
     cursor.close()
 
 
-def db_check(conn, table, columns):
+def db_check(conn, table, column_names):
     """ check columns all exist in SQLite database
 
     args:
         conn               connection to db
         table              name of the table
-        columns            list of columns
+        column_names       list of columns to check
     """
     sql = f"SELECT * FROM {table};"
     logger.debug(f"db_check() sql: {sql}")
@@ -132,7 +132,7 @@ def db_check(conn, table, columns):
     cursor.execute(sql)
     db_columns = list(next(zip(*cursor.description)))
     logger.debug(f"db_check() columns: {db_columns}")
-    for col in columns:
+    for col in column_names:
         if col not in db_columns:
             cursor.close()
             conn.close()
@@ -215,7 +215,7 @@ def sql_insert(conn, table, columns, values):
     conn.commit()
 
 
-def get_columns(settings, tcol="TIMESTAMP"):
+def get_columns(settings):
     """ get columns from sensor names
 
     Order of preference for extracting columns from settings:
@@ -244,8 +244,6 @@ def get_columns(settings, tcol="TIMESTAMP"):
     else:
         columns = tuple([str(sen).strip() for sen in sensors])
     assert len(columns) == len(sensors), "number of sensors and output columns mismatched"
-    if tcol is not None:
-        columns = (tcol,) + columns
     return columns
 
 
