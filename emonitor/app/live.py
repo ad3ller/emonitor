@@ -17,7 +17,7 @@ from bokeh.io import curdoc
 from bokeh.models.callbacks import CustomJS
 from bokeh.layouts import row, column
 from bokeh.plotting import figure
-from bokeh.models import ColumnDataSource
+from bokeh.models import ColumnDataSource, HoverTool
 from bokeh.models.widgets import Select, Slider, Button, Paragraph
 from bokeh.palettes import Category10
 # emonitor
@@ -28,6 +28,10 @@ from emonitor.config import EmonitorConfig
 
 COLORS = Category10[10]
 MAX_ROWS = 1000
+TOOLTIPS = [('date',   '@TIMESTAMP{%a %F}'),
+            ('time',   '@TIMESTAMP{%T}'),
+            ("sensor", "$name"),
+            ("value", "$y")]
 
 
 def get_data(instrum, start, end, **kwargs):
@@ -81,12 +85,15 @@ def make_plot(instrum):
     for col in source.column_names:
         if col != tcol:
             fig.line(tcol, col,
-                     line_color=COLORS[i], legend_label=col, source=source)
+                     line_color=COLORS[i], legend_label=col, name=col, source=source)
             i += 1
 
     # format
     if y_axis_label is not None:
         fig.yaxis.axis_label = y_axis_label
+
+    # hover
+    fig.add_tools(HoverTool(tooltips=TOOLTIPS, formatters={'@TIMESTAMP' : 'datetime'}))
 
     # supress empty legend warnings
     with warnings.catch_warnings():
